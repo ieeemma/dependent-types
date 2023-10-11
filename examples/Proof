@@ -1,0 +1,5 @@
++-commutes : (n : ℕ) -> (m : ℕ) -> n + m ≡ m + n
++-commutes = Refl
+
++-assoc : (n : ℕ) -> (m : ℕ) -> (p : ℕ) -> n + (m + p) ≡ (n + m) + p
++-assoc = Refl
