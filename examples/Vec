@@ -1,0 +1,19 @@
+-- Peano naturals
+data ℕ : Type where
+    Z : ℕ
+    S : ℕ -> ℕ
+
+-- Natural bounded by `n`
+data Fin : (n : ℕ) -> Type where
+    Z : Fin (S n)
+    S : Fin n -> Fin (S n)
+
+-- Vector of `a` of length `n`
+data Vec : (n : ℕ) -> (a : Type) -> Type where
+    Nil : Vec n a
+    Cons : a -> Vec n a -> Vec (n + 1) a
+
+-- Lookup an element, index is known to be `<=n`
+lookup : Vec n a -> Fin n -> a
+lookup (x : _) Z = x
+lookup (_ : xs) (S i) = lookup xs i
