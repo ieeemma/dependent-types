@@ -2,11 +2,8 @@ cabal-version:      2.4
 name:               dependent-types
 version:            0.1.0.0
 
-
-executable dependent-types
-    main-is:            Main.hs
-    build-depends:      base ^>=4.16.4.0
-    hs-source-dirs:     src
+common all
+    build-depends:      base ^>=4.17.2.0,
     default-language:   GHC2021
     default-extensions: LambdaCase,
                         OverloadedStrings,
@@ -14,3 +11,17 @@ executable dependent-types
     ghc-options:        -Wall
                         -Wcompat
                         -Wredundant-constraints
+
+
+executable dependent-types
+    import:             all
+    main-is:            Main.hs
+    hs-source-dirs:     src
+
+test-suite tests
+    import:             all
+    type:               exitcode-stdio-1.0
+    main-is:            Main.hs
+    hs-source-dirs:     tests
+    build-depends:      tasty ^>=1.5,
+                        tasty-quickcheck,
