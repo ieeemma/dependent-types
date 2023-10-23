@@ -7,7 +7,7 @@ A yet unnamed dependently typed language and compiler.
 Features marked with `*` are not required for the core language but may be implemented if time allows.
 
 - Parser
-  - [ ] AST powered by [recursion-schemes](https://hackage.haskell.org/package/recursion-schemes)
+  - [x] AST powered by [recursion-schemes](https://hackage.haskell.org/package/recursion-schemes)
   - [ ] Expressions
   - [ ] Toplevels
   - [ ] Whitespace sensitive parsing similar to Haskell
