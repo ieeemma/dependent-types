@@ -6,7 +6,7 @@ module Syntax where
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.Text (Text)
 
-type Name = Text
+type Sym = Text
 
 {- | Patterns can be one of:
   * C p₁ … pₙ
@@ -15,8 +15,8 @@ type Name = Text
   * _
 -}
 data Pat
-  = Destruct Text [Pat]
-  | Bind Text
+  = Destruct Sym [Pat]
+  | Bind Sym
   | IsLit Int
   | Wild
 
@@ -33,12 +33,13 @@ makeBaseFunctor ''Pat
   * σ
 -}
 data Tm
-  = Pi Name Tm Tm
-  | Lam Name Tm
+  = Pi Sym Tm Tm
+  | Lam Sym Tm
   | App Tm Tm
-  | Let Name Tm Tm Tm
+  | Let Sym Tm Tm Tm
   | Case Tm [(Pat, Tm)]
-  | Sym Name
+  | Sym Sym
+  | Con Sym
   | Lit Int
   | U
 
