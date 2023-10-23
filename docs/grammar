@@ -37,3 +37,7 @@ Lower = UnicodeLower UnicodeLetterOrNumber*
 Upper = UnicodeUpper UnicodeLetterOrNumber*
 
 Int = /[+-]?[0-9][1-9]*/
+
+Comment
+  = /\{-.*?-\}/
+  | /--[^\n]*/
