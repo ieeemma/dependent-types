@@ -1,0 +1,39 @@
+// EBNF grammar file, with the following caveats:
+//  * Whitespace sensitivity replaced with { ; }
+//  * No custom infix rules
+//  * No error message handling
+//  * No tree shaping
+
+// Nonterminals
+
+term = pi_implicit
+
+  pi_implicit = app ("->" pi_implicit)?
+
+  app = atom app?
+
+  atom = pi | paren | lam | let | case | Int | Lower | Upper
+
+    paren = "(" term ")"
+
+    pi = "(" Lower ":" term ")" "->" term
+
+    lam = "λ" Lower "->" term
+
+    let = "let" Lower ":" term "=" term "in" term
+
+    case = "case" term "of" "{" alternate* "}"
+
+      alternate = pattern "->" term
+
+pattern = destruct | Lower | Int | "_"
+
+  destruct = Upper destruct_args*
+
+// Terminals
+
+Lower = UnicodeLower UnicodeLetterOrNumber*
+
+Upper = UnicodeUpper UnicodeLetterOrNumber*
+
+Int = /[+-]?[0-9][1-9]*/
