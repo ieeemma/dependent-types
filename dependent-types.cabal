@@ -4,6 +4,8 @@ version:            0.1.0.0
 
 common all
     build-depends:      base ^>=4.17.2.0,
+                        text,
+                        recursion-schemes
     default-language:   GHC2021
     default-extensions: LambdaCase,
                         OverloadedStrings,
@@ -16,6 +18,7 @@ common all
 executable dependent-types
     import:             all
     main-is:            Main.hs
+    other-modules:      Syntax
     hs-source-dirs:     src
 
 test-suite tests
