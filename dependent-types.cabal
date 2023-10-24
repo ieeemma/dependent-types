@@ -8,6 +8,7 @@ common all
                         recursion-schemes,
                         megaparsec,
                         parser-combinators,
+                        prettyprinter,
     default-language:   GHC2021
     default-extensions: LambdaCase,
                         OverloadedStrings,
@@ -15,12 +16,12 @@ common all
     ghc-options:        -Wall
                         -Wcompat
                         -Wredundant-constraints
-
+                        -Wno-orphans
 
 executable dependent-types
     import:             all
     main-is:            Main.hs
-    other-modules:      Syntax, Parse
+    other-modules:      Syntax, Parse, Pretty
     hs-source-dirs:     src
 
 test-suite tests
