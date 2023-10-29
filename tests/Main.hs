@@ -4,8 +4,10 @@ import Test.Tasty (TestTree, defaultMain, testGroup)
 
 import Test.Tasty.QuickCheck (testProperty)
 
+import Parse.Term (terms)
+
 main :: IO ()
-main = defaultMain $ testGroup "Tests" [identity]
+main = defaultMain $ testGroup "Tests" [terms]
 
 -- Test the identity `sin²θ ≡ (1 - cos 2θ) ÷ 2`
 identity :: TestTree
