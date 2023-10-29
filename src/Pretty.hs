@@ -59,3 +59,6 @@ instance Pretty Pat where
       BindF x -> pretty x
       IsLitF n -> pretty n
       WildF -> "_"
+
+instance Show Tm where
+  show = show . pretty

@@ -19,6 +19,7 @@ data Pat
   | Bind Sym
   | IsLit Int
   | Wild
+  deriving (Eq)
 
 makeBaseFunctor ''Pat
 
@@ -42,5 +43,6 @@ data Tm
   | Con Sym
   | Lit Int
   | U
+  deriving (Eq)
 
 makeBaseFunctor ''Tm
