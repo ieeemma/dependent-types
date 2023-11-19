@@ -21,7 +21,7 @@ common all
 executable dependent-types
     import:             all
     main-is:            Main.hs
-    other-modules:      Syntax, Parse, Pretty
+    other-modules:      Syntax, Pretty, Parse.Lex
     hs-source-dirs:     src
 
 test-suite tests
