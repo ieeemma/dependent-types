@@ -1,6 +1,15 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies #-}
 
+{- |
+This module defines the token stream type used by the parser,
+allowing us to use the custom `Token` type with megaparsec.
+The `Stream` typeclass defined by megaparsec has functions for taking data
+from the stream and chunking it.
+In addition, the `VisualStream` and `TraversalStream` typeclasses allow us to
+pretty-print the stream and update the line/column state.
+These both allow for pretty error messages.
+-}
 module Parse.Stream where
 
 import Data.List.NonEmpty (toList)
@@ -21,8 +30,6 @@ Stores the remaining token and the original source lines for error reporting.
 -}
 data TokenStream = TokenStream [T.Text] [L.Token]
 
--- Deriving `Stream` means `TokenStream` can be processed by megaparsec.
--- It tells the library how to split the stream into 'chunks'.
 -- This is largely an adaptation of the `[a]` instance found
 -- [here](https://hackage.haskell.org/package/megaparsec-9.5.0/docs/src/Text.Megaparsec.Stream.html#line-135).
 instance Stream TokenStream where

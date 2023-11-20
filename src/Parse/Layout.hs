@@ -1,3 +1,36 @@
+{- |
+This module implements a layout algorithm for transforming indentation tokens
+into explicit layout tokens. This allows us to use a context-free grammar.
+For example:
+```
+let x = 5
+    y = 10
+ in x + y
+```
+Becomes:
+```
+let { x = 5 ; y = 10 }
+ in x + y
+```
+
+This algorithm works by maintaining a stack of indentation levels.
+There are 3 rules:
+- At block tokens, eg. `let` or `of`, we open a new block. This pushes the
+  current indentation level onto the stack.
+- At newline tokens, we compare the current indentation level to the next
+  non-whitespace token. If the next token is indented more, we open a new block.
+  If the next token is indented less, we close the current block. If the next
+  token is indented the same, we insert a separator.
+- At the end of the input, we close any remaining blocks on the stack.
+
+This is a stateful algorithm. We use two nested `State` monads to keep track of
+first the indentation stream, then the remaining input stream.
+Functions like `block` and `nl` run in the inner `StateT` monad, allowing them
+to consume the input stream to find the next non-whitespace token.
+
+This is based on the algorithm described in the [Haskell 98 report]
+(https://www.haskell.org/onlinereport/haskell2010/haskellch10.html#x17-17800010.3)
+-}
 module Parse.Layout where
 
 import Control.Applicative (liftA2)

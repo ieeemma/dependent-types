@@ -1,3 +1,18 @@
+{- |
+This module defines the lexer for the language.
+It is implemented using megaparsec. In other languages, this would be a
+regex-based lexer, but Haskell doesn't commonly use regexes.
+
+A string such as `let x = 1 in x` is lexed into a list of tokens:
+```
+[ Token TLet "let" (SourcePos …)
+, Token TLower "x" (SourcePos …)
+, Token TEquals "=" (SourcePos …)
+, Token TNumber "1" (SourcePos …)
+, Token TIn "in" (SourcePos …)
+, Token TLower "x" (SourcePos …) ]
+```
+-}
 module Parse.Lex where
 
 import Control.Applicative (liftA2)
@@ -8,10 +23,13 @@ import Text.Megaparsec (MonadParsec (notFollowedBy, takeWhile1P), Parsec, Source
 import Text.Megaparsec.Char (alphaNumChar, char, lowerChar, punctuationChar, string, upperChar)
 import Text.Megaparsec.Char.Lexer (charLiteral)
 
+-- | Lexer is a parser over `Text` that produces tokens.
 type Lexer = Parsec Void Text
 
+-- | Tokens store a kind, contents, and source location.
 data Token = Token TokenKind Text SourcePos
 
+-- | Simple enum of all token kinds.
 data TokenKind
   = -- Punctuation
     TLambda
@@ -42,9 +60,11 @@ data TokenKind
   | TSep
   deriving (Show, Eq)
 
+-- | Lex a string into a list of tokens.
 tokens :: Lexer [Token]
 tokens = many (choice $ mkToken <$> toks)
 
+-- | List of token kinds and their parsers.
 toks :: [(TokenKind, Lexer Text)]
 toks =
   [ -- Punctuation
@@ -71,9 +91,11 @@ toks =
     (TWs, takeWhile1P (Just "whitespace") (`elem` [' ', '\t']))
   , (TNl, string "\n")
   ]
+ where
+  ident p q = pack <$> liftA2 (:) p (many q) <* notFollowedBy q
 
-ident :: Lexer Char -> Lexer Char -> Lexer Text
-ident p q = pack <$> liftA2 (:) p (many q) <* notFollowedBy q
-
+{- | Construct a token parser from a kind and parser.
+This wraps the parser in a `Token` and adds the source position.
+-}
 mkToken :: (TokenKind, Lexer Text) -> Lexer Token
 mkToken (k, p) = Token k <$> p <*> getSourcePos
