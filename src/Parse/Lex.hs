@@ -14,32 +14,33 @@ data Token = Token TokenKind Text SourcePos
 
 data TokenKind
   = -- Punctuation
-    Lambda
-  | Arrow
-  | LParen
-  | RParen
-  | Equals
-  | Colon
-  | Uscore
+    TLambda
+  | TArrow
+  | TLParen
+  | TRParen
+  | TEquals
+  | TColon
+  | TUscore
   | -- Keywords
-    Let
-  | In
-  | Case
-  | Of
-  | Type
+    TLet
+  | TIn
+  | TCase
+  | TOf
+  | TType
   | -- Atoms
-    Lower
-  | Upper
-  | Number
-  | String
-  | Operator
+    TLower
+  | TUpper
+  | TNumber
+  | TString
+  | TOperator
   | -- Whitespace
-    Ws
-  | Nl
+    TWs
+  | TNl
   | -- Meta
-    Open
-  | Close
-  | Sep
+    TOpen
+  | TClose
+  | TSep
+  deriving (Show, Eq)
 
 tokens :: Lexer [Token]
 tokens = many (choice $ mkToken <$> toks)
@@ -47,28 +48,28 @@ tokens = many (choice $ mkToken <$> toks)
 toks :: [(TokenKind, Lexer Text)]
 toks =
   [ -- Punctuation
-    (Lambda, string "λ" <|> string "\\")
-  , (Arrow, string "->" <|> string "→")
-  , (LParen, string "(")
-  , (RParen, string ")")
-  , (Equals, string "=")
-  , (Colon, string ":")
-  , (Uscore, string "_")
+    (TLambda, string "λ" <|> string "\\")
+  , (TArrow, string "->" <|> string "→")
+  , (TLParen, string "(")
+  , (TRParen, string ")")
+  , (TEquals, string "=")
+  , (TColon, string ":")
+  , (TUscore, string "_")
   , -- Keywords
-    (Let, string "let")
-  , (In, string "in")
-  , (Case, string "case")
-  , (Of, string "of")
-  , (Type, string "Type")
+    (TLet, string "let")
+  , (TIn, string "in")
+  , (TCase, string "case")
+  , (TOf, string "of")
+  , (TType, string "Type")
   , -- Atoms
-    (Lower, ident lowerChar alphaNumChar)
-  , (Upper, ident upperChar alphaNumChar)
-  , (Number, takeWhile1P (Just "digit") isDigit)
-  , (String, char '"' >> pack <$> manyTill charLiteral (char '"'))
-  , (Operator, ident punctuationChar punctuationChar)
+    (TLower, ident lowerChar alphaNumChar)
+  , (TUpper, ident upperChar alphaNumChar)
+  , (TNumber, takeWhile1P (Just "digit") isDigit)
+  , (TString, char '"' >> pack <$> manyTill charLiteral (char '"'))
+  , (TOperator, ident punctuationChar punctuationChar)
   , -- Whitespace
-    (Ws, takeWhile1P (Just "whitespace") (`elem` [' ', '\t']))
-  , (Nl, string "\n")
+    (TWs, takeWhile1P (Just "whitespace") (`elem` [' ', '\t']))
+  , (TNl, string "\n")
   ]
 
 ident :: Lexer Char -> Lexer Char -> Lexer Text

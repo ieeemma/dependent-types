@@ -33,10 +33,10 @@ layout' :: [Token] -> Layout [Token]
 layout' [] = end
 layout' (t@(Token tk _ pos) : ts) = do
   (new, ts') <- flip runStateT ts $ case tk of
-    Let -> (t :) <$> block pos
-    Of -> (t :) <$> block pos
-    Nl -> nl pos
-    Ws -> pure []
+    TLet -> (t :) <$> block pos
+    TOf -> (t :) <$> block pos
+    TNl -> nl pos
+    TWs -> pure []
     _ -> pure [t]
   (new <>) <$> layout' ts'
 
@@ -86,11 +86,11 @@ ref =
 
 whitespace :: Token -> Bool
 whitespace (Token tk _ _) = case tk of
-  Ws -> True
-  Nl -> True
+  TWs -> True
+  TNl -> True
   _ -> False
 
 open, close, sep :: SourcePos -> Token
-open = Token Open "{"
-close = Token Close "}"
-sep = Token Sep ";"
+open = Token TOpen "{"
+close = Token TClose "}"
+sep = Token TSep ";"
