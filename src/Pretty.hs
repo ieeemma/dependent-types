@@ -2,7 +2,7 @@ module Pretty where
 
 import Control.Arrow ((>>>))
 import Data.Functor.Foldable (Base, Recursive, para, project)
-import Prettyprinter (Doc, Pretty, hsep, pretty, (<+>))
+import Prettyprinter (Doc, Pretty, hsep, indent, line, pretty, vsep, (<+>))
 import Syntax
 
 -- | Return the precedence of a type, low is higher.
@@ -34,6 +34,10 @@ parens x = fmap (paren $ prec x) x
     | prec (project y) > n = "(" <> d <> ")"
     | otherwise = d
 
+-- | Indent sub-terms such as `let` and `case`.
+block :: [Doc ann] -> Doc ann
+block = (line <>) . vsep . map (indent 2)
+
 instance Pretty Tm where
   pretty = para (parens >>> f)
    where
@@ -43,12 +47,15 @@ instance Pretty Tm where
       PiF x σ π -> "(" <> pretty x <> ":" <+> σ <> ")" <+> "->" <+> π
       LamF x e -> "λ" <> pretty x <+> "->" <+> e
       AppF e₁ e₂ -> e₁ <+> e₂
-      LetF x σ e₁ e₂ -> "let" <+> pretty x <> ":" <+> σ <+> "=" <+> e₁ <+> "in" <+> e₂
-      CaseF _ _ -> undefined
+      LetF bs e -> "let" <> block (bind <$> bs) <+> "in" <+> e
+      CaseF e ps -> "case" <+> e <+> "of" <> block (alt <$> ps)
       SymF x -> pretty x
       ConF x -> pretty x
       LitF n -> pretty n
       UF -> "Type"
+
+    bind (x, σ, e) = pretty x <> ":" <+> σ <+> "=" <+> e
+    alt (p, e) = pretty p <+> "->" <+> e
 
 instance Pretty Pat where
   pretty = para (parens >>> f)

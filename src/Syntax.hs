@@ -37,7 +37,7 @@ data Tm
   = Pi Sym Tm Tm
   | Lam Sym Tm
   | App Tm Tm
-  | Let Sym Tm Tm Tm
+  | Let [(Sym, Tm, Tm)] Tm
   | Case Tm [(Pat, Tm)]
   | Sym Sym
   | Con Sym

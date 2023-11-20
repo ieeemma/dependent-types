@@ -50,9 +50,7 @@ atom =
         <$> (tok TLambda *> tok TLower)
         <*> (tok TArrow *> tm)
     , Let
-        <$> (tok TLet *> tok TLower)
-        <*> (tok TColon *> tm)
-        <*> (tok TEquals *> tm)
+        <$> (tok TLet *> block bind)
         <*> (tok TIn *> tm)
     , Case
         <$> (tok TCase *> tm)
@@ -63,6 +61,7 @@ atom =
     , Con <$> tok TUpper
     ]
  where
+  bind = (,,) <$> tok TLower <*> (tok TColon *> tm) <*> (tok TEquals *> tm)
   alt = (,) <$> pat <*> (tok TArrow *> tm)
 
 -- | Parse a pattern.
