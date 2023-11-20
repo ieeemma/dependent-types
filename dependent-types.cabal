@@ -9,6 +9,7 @@ common all
                         megaparsec,
                         parser-combinators,
                         prettyprinter,
+                        mtl
     default-language:   GHC2021
     default-extensions: LambdaCase,
                         OverloadedStrings,
@@ -21,7 +22,7 @@ common all
 executable dependent-types
     import:             all
     main-is:            Main.hs
-    other-modules:      Syntax, Pretty, Parse.Lex
+    other-modules:      Syntax, Pretty, Parse.Lex, Parse.Layout
     hs-source-dirs:     src
 
 test-suite tests
