@@ -3,6 +3,7 @@
 
 module Syntax where
 
+import Control.Comonad.Cofree (Cofree)
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.Text (Text)
 
@@ -33,12 +34,12 @@ makeBaseFunctor ''Pat
   * n
   * σ
 -}
-data Tm
-  = Pi Sym Tm Tm
-  | Lam Sym Tm
-  | App Tm Tm
-  | Let [(Sym, Tm, Tm)] Tm
-  | Case Tm [(Pat, Tm)]
+data Tm p
+  = Pi Sym (Tm p) (Tm p)
+  | Lam Sym (Tm p)
+  | App (Tm p) (Tm p)
+  | Let [(Sym, Tm p, Tm p)] (Tm p)
+  | Case (Tm p) [(p, Tm p)]
   | Sym Sym
   | Con Sym
   | Lit Int
@@ -46,3 +47,7 @@ data Tm
   deriving (Eq)
 
 makeBaseFunctor ''Tm
+
+-- Aliases for annotations
+type APat a = Cofree PatF a
+type ATm a = Cofree (TmF (APat a)) a
