@@ -6,6 +6,7 @@ common all
     build-depends:      base ^>=4.17.2.0,
                         text,
                         recursion-schemes,
+                        comonad,
                         free,
                         megaparsec,
                         parser-combinators,

@@ -1,15 +1,49 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Pretty where
 
 import Control.Arrow ((>>>))
+import Control.Comonad.Trans.Cofree (CofreeF (..))
 import Data.Functor.Foldable (Base, Recursive, para, project)
-import Prettyprinter (Doc, Pretty, hsep, indent, line, pretty, vsep, (<+>))
+import Prettyprinter (Doc, hsep, indent, line, pretty, vsep, (<+>))
 import Syntax
 
--- | Return the precedence of a type, low is higher.
-class Prec a where
-  prec :: a -> Int
+class Render f where
+  -- | Given a structure containing `Doc`s, render it to a `Doc`.
+  step :: f (Doc ann) -> Doc ann
 
-instance Prec (TmF a) where
+  -- | Return the precedence of a structure for parenthesization.
+  prec :: f a -> Int
+
+-- | Render a `Render`able structure to a `Doc`, inserting parentheses.
+render :: (Recursive a, Render (Base a)) => a -> Doc ann
+render = para (parens >>> step)
+ where
+  parens x = paren (prec x) <$> x
+  paren n (y, d)
+    | prec (project y) > n = "(" <> d <> ")"
+    | otherwise = d
+
+instance (Render f) => Render (CofreeF f a) where
+  step (_ :< xs) = step xs
+  prec (_ :< xs) = prec xs
+
+instance (Recursive p, Render (Base p)) => Render (TmF p) where
+  step = \case
+    PiF "_" σ π -> σ <+> "->" <+> π
+    PiF x σ π -> "(" <> pretty x <> ":" <+> σ <> ")" <+> "->" <+> π
+    LamF x e -> "λ" <> pretty x <+> "->" <+> e
+    AppF e₁ e₂ -> e₁ <+> e₂
+    LetF bs e -> "let" <> block (bind <$> bs) <+> "in" <+> e
+    CaseF e ps -> "case" <+> e <+> "of" <> block (alt <$> ps)
+    SymF x -> pretty x
+    ConF x -> pretty x
+    LitF n -> pretty n
+    UF -> "Type"
+   where
+    bind (x, σ, e) = pretty x <> ":" <+> σ <+> "=" <+> e
+    alt (p, e) = render p <+> "->" <+> e
+
   prec = \case
     PiF "_" _ _ -> 10
     PiF{} -> 2
@@ -19,53 +53,17 @@ instance Prec (TmF a) where
     CaseF{} -> 10
     _ -> 0
 
-instance Prec (PatF a) where
+instance Render PatF where
+  step = \case
+    DestructF x ps -> pretty x <+> hsep ps
+    BindF x -> pretty x
+    IsLitF n -> pretty n
+    WildF -> "_"
+
   prec = \case
     DestructF{} -> 10
     _ -> 0
 
--- | Inject parenthesis to children of a `Recursive` with lower precedence.
-parens :: (Recursive t, Prec (Base t t), Prec (Base t (t, Doc ann))) => Base t (t, Doc ann) -> Base t (Doc ann)
--- TODO: this could be simplified by rolling the `Base` constraint
--- into `Prec`?
-parens x = fmap (paren $ prec x) x
- where
-  paren n (y, d)
-    | prec (project y) > n = "(" <> d <> ")"
-    | otherwise = d
-
--- | Indent sub-terms such as `let` and `case`.
+-- | Line-separate and indent a list of `Doc`s.
 block :: [Doc ann] -> Doc ann
 block = (line <>) . vsep . map (indent 2)
-
-instance Pretty Tm where
-  pretty = para (parens >>> f)
-   where
-    f :: Base Tm (Doc ann) -> Doc ann
-    f = \case
-      PiF "_" σ π -> σ <+> "->" <+> π
-      PiF x σ π -> "(" <> pretty x <> ":" <+> σ <> ")" <+> "->" <+> π
-      LamF x e -> "λ" <> pretty x <+> "->" <+> e
-      AppF e₁ e₂ -> e₁ <+> e₂
-      LetF bs e -> "let" <> block (bind <$> bs) <+> "in" <+> e
-      CaseF e ps -> "case" <+> e <+> "of" <> block (alt <$> ps)
-      SymF x -> pretty x
-      ConF x -> pretty x
-      LitF n -> pretty n
-      UF -> "Type"
-
-    bind (x, σ, e) = pretty x <> ":" <+> σ <+> "=" <+> e
-    alt (p, e) = pretty p <+> "->" <+> e
-
-instance Pretty Pat where
-  pretty = para (parens >>> f)
-   where
-    f :: Base Pat (Doc ann) -> Doc ann
-    f = \case
-      DestructF x ps -> pretty x <+> hsep ps
-      BindF x -> pretty x
-      IsLitF n -> pretty n
-      WildF -> "_"
-
-instance Show Tm where
-  show = show . pretty
