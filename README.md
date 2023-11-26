@@ -10,7 +10,7 @@ Features marked with `*` are not required for the core language but may be imple
   - [x] AST powered by [recursion-schemes](https://hackage.haskell.org/package/recursion-schemes)
   - [x] Expressions
   - [ ] Toplevels
-  - [ ] Whitespace sensitive parsing similar to Haskell
+  - [x] Whitespace sensitive parsing similar to Haskell
   - [ ] Custom infix operators
   - [ ] \* Anyfix operator parsing similar to Agda
 - Static analysis
