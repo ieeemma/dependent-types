@@ -6,6 +6,7 @@ module Syntax where
 import Control.Comonad.Cofree (Cofree)
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.Text (Text)
+import GHC.Generics (Generic)
 
 type Sym = Text
 
@@ -20,7 +21,7 @@ data Pat
   | Bind Sym
   | IsLit Int
   | Wild
-  deriving (Eq)
+  deriving (Eq, Show)
 
 makeBaseFunctor ''Pat
 
@@ -44,10 +45,14 @@ data Tm p
   | Con Sym
   | Lit Int
   | U
-  deriving (Eq)
+  deriving (Eq, Show)
 
 makeBaseFunctor ''Tm
 
 -- Aliases for annotations
+
+deriving instance Generic Pat
+deriving instance Generic (Tm a)
+
 type APat a = Cofree PatF a
 type ATm a = Cofree (TmF (APat a)) a
