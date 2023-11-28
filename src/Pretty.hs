@@ -24,6 +24,9 @@ render = para (parens >>> step)
     | prec (project y) > n = "(" <> d <> ")"
     | otherwise = d
 
+-- instance {-# OVERLAPS #-} (Recursive a, Render (Base a)) => Show a where
+--   show = show . render
+
 instance (Render f) => Render (CofreeF f a) where
   step (_ :< xs) = step xs
   prec (_ :< xs) = prec xs
