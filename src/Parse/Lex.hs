@@ -28,6 +28,7 @@ type Lexer = Parsec Void Text
 
 -- | Tokens store a kind, contents, and source location.
 data Token = Token TokenKind Text SourcePos
+  deriving (Eq, Ord)
 
 -- | Simple enum of all token kinds.
 data TokenKind
@@ -58,7 +59,7 @@ data TokenKind
     TOpen
   | TClose
   | TSep
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 -- | Lex a string into a list of tokens.
 tokens :: Lexer [Token]

@@ -19,12 +19,6 @@ import Text.Megaparsec
 
 import Parse.Lex qualified as L
 
--- These definitions should be unused.
-instance Eq L.Token where
-  (==) = undefined
-instance Ord L.Token where
-  compare = undefined
-
 {- | The stream of tokens fed to megaparsec.
 Stores the remaining token and the original source lines for error reporting.
 -}
