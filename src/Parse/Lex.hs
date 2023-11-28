@@ -85,7 +85,7 @@ toks =
   , -- Atoms
     (TLower, ident lowerChar alphaNumChar)
   , (TUpper, ident upperChar alphaNumChar)
-  , (TNumber, takeWhile1P (Just "digit") isDigit)
+  , (TNumber, int)
   , (TString, char '"' >> pack <$> manyTill charLiteral (char '"'))
   , (TOperator, ident punctuationChar punctuationChar)
   , -- Whitespace
@@ -94,6 +94,10 @@ toks =
   ]
  where
   ident p q = pack <$> liftA2 (:) p (many q) <* notFollowedBy q
+  int = do
+    op <- string "+" <|> string "-" <|> pure ""
+    n <- takeWhile1P (Just "digit") isDigit
+    pure (op <> n)
 
 {- | Construct a token parser from a kind and parser.
 This wraps the parser in a `Token` and adds the source position.
