@@ -8,7 +8,7 @@ constructor using a uniform distribution.
 Custom generators are inserted to produce uppercase constructor names and
 non-empty lists (which the parser can fail on).
 -}
-module Arbitrary where
+module Arbitrary () where
 
 import Data.Proxy (Proxy (..))
 import Data.Text qualified as T
@@ -21,7 +21,7 @@ lower = oneof (pure . T.singleton <$> "xyzαβ")
 upper = oneof (pure . T.singleton <$> "XYZℕΣ")
 
 instance Arbitrary Sym where
-  arbitrary = oneof (pure . T.singleton <$> "xyz")
+  arbitrary = lower
 
 instance (Arbitrary p) => Arbitrary (Tm p) where
   arbitrary = genericArbitraryRecG gens uniform `withBaseCase` base

@@ -1,18 +1,39 @@
-module Parse.Parse where
+{- | This module implements the bulk of the parser.
+The grammar can be found in `docs/grammar`.
 
-import Parse.Lex
-import Parse.Stream
+The main entrypoint is `parseSyntax`, which tokenizes then parses some
+source code, producing either an error message or a syntax tree.
+Trees are also annotated with source locations, the `Span` type,
+which is used for error reporting and pretty-printing.
+-}
+module Parse.Parse (
+  parseSyntax,
+  Span (..),
+  spanned,
+  term,
+) where
+
+import Parse.Layout (layout)
+import Parse.Lex (Token (..), TokenKind (..), tokens)
+import Parse.Stream (TokenStream (..))
 import Syntax
 
 import Control.Comonad.Cofree (Cofree (..))
 import Control.Monad.Combinators.Expr (Operator (..), makeExprParser)
-import Data.Text (Text, unpack)
+import Data.Text (Text, lines, pack, unpack)
 import Data.Void (Void)
 import Text.Megaparsec hiding (tokens)
-import Prelude hiding (pi)
+import Prelude hiding (lines, pi)
 
 -- | Parser over the custom `TokenStream` type.
 type Parser = Parsec Void TokenStream
+
+parseSyntax :: Text -> Text -> Parser a -> Either Text a
+parseSyntax name src p = case parse tokens (unpack name) src of
+  Left e -> Left (pack $ errorBundlePretty e)
+  Right ts -> case parse p (unpack name) (TokenStream (lines src) (layout ts)) of
+    Left e -> Left (pack $ errorBundlePretty e)
+    Right x -> Right x
 
 -- | Source location tracking
 data Span = Span SourcePos SourcePos
@@ -41,8 +62,8 @@ block :: Parser a -> Parser [a]
 block p = tok TOpen *> p `sepBy` tok TSep <* tok TClose
 
 -- | Parse a whole term with operator precedence.
-tm :: Parser (ATm Span)
-tm =
+term :: Parser (ATm Span)
+term =
   -- TODO: custom operator precedence for terms and patterns.
   makeExprParser grouping [[InfixL (pure app)], [InfixR (pure arr)]]
  where
@@ -50,14 +71,14 @@ tm =
   arr x@(Span l _ :< _) y@(Span _ r :< _) = Span l r :< PiF "_" x y
 
 grouping :: Parser (ATm Span)
-grouping = spanned pi <|> paren <|> atom
+grouping = try (spanned pi) <|> paren <|> atom
  where
   pi =
     PiF
       <$> (tok TLParen *> tok TLower)
-      <*> (tok TColon *> tm <* tok TRParen)
-      <*> (tok TArrow *> tm)
-  paren = tok TLParen *> tm <* tok TRParen
+      <*> (tok TColon *> term <* tok TRParen)
+      <*> (tok TArrow *> term)
+  paren = tok TLParen *> term <* tok TRParen
 
 -- | Parse an atomic term.
 atom :: Parser (ATm Span)
@@ -66,12 +87,12 @@ atom =
     $ choice
       [ LamF
           <$> (tok TLambda *> tok TLower)
-          <*> (tok TArrow *> tm)
+          <*> (tok TArrow *> term)
       , LetF
           <$> (tok TLet *> block bind)
-          <*> (tok TIn *> tm)
+          <*> (tok TIn *> term)
       , CaseF
-          <$> (tok TCase *> tm)
+          <$> (tok TCase *> term)
           <*> (tok TOf *> block alt)
       , LitF <$> int
       , UF <$ tok TType
@@ -79,8 +100,8 @@ atom =
       , ConF <$> tok TUpper
       ]
  where
-  bind = (,,) <$> tok TLower <*> (tok TColon *> tm) <*> (tok TEquals *> tm)
-  alt = (,) <$> pat <*> (tok TArrow *> tm)
+  bind = (,,) <$> tok TLower <*> (tok TColon *> term) <*> (tok TEquals *> term)
+  alt = (,) <$> pat <*> (tok TArrow *> term)
 
 -- | Parse a pattern.
 pat :: Parser (APat Span)
