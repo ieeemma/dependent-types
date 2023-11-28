@@ -9,6 +9,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (testProperty, (===))
 
 import Arbitrary ()
+import Parse.Lex (Token (..))
 import Parse.Parse (parseSyntax, term)
 import Pretty (render)
 import Syntax
@@ -19,9 +20,11 @@ terms =
     "Terms"
     [testProperty "Random" random]
  where
-  random x = case parseSyntax "<test>" (T.pack $ show $ render x) term of
-    Left e -> error (T.unpack e)
-    Right y -> x === cata f y
+  random x =
+    let src = show (render x)
+     in case parseSyntax "<test>" (T.pack src) term of
+          (ts, Left e) -> error (src <> "\n\n" <> T.unpack (T.intercalate " " [t | Token _ t _ <- ts]) <> "\n\n" <> T.unpack e)
+          (_, Right y) -> x === cata f y
 
   -- TODO: There *must* be a cleaner way to achieve this.
   -- Maybe `refix` and `embed`?
