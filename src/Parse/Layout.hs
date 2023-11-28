@@ -96,7 +96,7 @@ nl pos =
   cmp >>= \case
     Just (_, LT) -> do
       lift (modify $ fromJust . snd . uncons)
-      pure [close pos]
+      (close pos :) <$> nl pos
     Just (_, EQ) -> do
       pure [sep pos]
     _ -> pure []

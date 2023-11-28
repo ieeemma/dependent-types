@@ -22,18 +22,18 @@ import Control.Comonad.Cofree (Cofree (..))
 import Control.Monad.Combinators.Expr (Operator (..), makeExprParser)
 import Data.Text (Text, lines, pack, unpack)
 import Data.Void (Void)
-import Text.Megaparsec hiding (tokens)
+import Text.Megaparsec hiding (Token, tokens)
 import Prelude hiding (lines, pi)
 
 -- | Parser over the custom `TokenStream` type.
 type Parser = Parsec Void TokenStream
 
-parseSyntax :: Text -> Text -> Parser a -> Either Text a
+parseSyntax :: Text -> Text -> Parser a -> ([Token], Either Text a)
 parseSyntax name src p = case parse tokens (unpack name) src of
-  Left e -> Left (pack $ errorBundlePretty e)
+  Left e -> (undefined, Left (pack $ errorBundlePretty e))
   Right ts -> case parse p (unpack name) (TokenStream (lines src) (layout ts)) of
-    Left e -> Left (pack $ errorBundlePretty e)
-    Right x -> Right x
+    Left e -> (layout ts, Left (pack $ errorBundlePretty e))
+    Right x -> (layout ts, Right x)
 
 -- | Source location tracking
 data Span = Span SourcePos SourcePos
