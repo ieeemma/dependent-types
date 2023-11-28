@@ -26,7 +26,12 @@ instance Arbitrary Sym where
 instance (Arbitrary p) => Arbitrary (Tm p) where
   arbitrary = genericArbitraryRecG gens uniform `withBaseCase` base
    where
-    gens = constrGen (Proxy :: Proxy '("Con", 0)) upper :+ listOf1'
+    gens =
+      -- Ensure constructors are upper case
+      constrGen (Proxy :: Proxy '("Con", 0)) upper
+        -- Ensure lists are non-empty
+        :+ constrGen (Proxy :: Proxy '("Let", 0)) (listOf1' arbitrary)
+        :+ constrGen (Proxy :: Proxy '("Case", 1)) (listOf1' arbitrary)
     base =
       oneof
         [ Sym <$> arbitrary
@@ -38,7 +43,11 @@ instance (Arbitrary p) => Arbitrary (Tm p) where
 instance Arbitrary Pat where
   arbitrary = genericArbitraryRecG gens uniform `withBaseCase` base
    where
-    gens = constrGen (Proxy :: Proxy '("Destruct", 0)) upper :+ listOf1'
+    gens =
+      -- Ensure constructors are upper case
+      constrGen (Proxy :: Proxy '("Destruct", 0)) upper
+        -- Ensure lists are non-empty
+        :+ constrGen (Proxy :: Proxy '("Destruct", 1)) (listOf1' arbitrary)
     base =
       oneof
         [ Bind <$> arbitrary
