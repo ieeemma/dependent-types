@@ -13,6 +13,7 @@ common all
                         prettyprinter,
                         mtl,
     default-language:   GHC2021
+    other-modules:      Syntax, Pretty, Parse.Lex, Parse.Layout, Parse.Stream, Parse.Parse
     default-extensions: LambdaCase,
                         OverloadedStrings,
                         BlockArguments
@@ -24,14 +25,13 @@ common all
 executable dependent-types
     import:             all
     main-is:            Main.hs
-    other-modules:      Syntax, Pretty, Parse.Lex, Parse.Layout, Parse.Stream, Parse.Parse
     hs-source-dirs:     src
 
 test-suite tests
     import:             all
     type:               exitcode-stdio-1.0
     main-is:            Main.hs
-    other-modules:      Syntax, Parse.Parse, Parse.Lex, Parse.Layout, Pretty, Parse.Term
+    other-modules:      Arbitrary, Parse.Term
     hs-source-dirs:     tests, src
     build-depends:      tasty ^>=1.5,
                         tasty-quickcheck,

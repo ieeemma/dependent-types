@@ -5,17 +5,11 @@ module Parse.Term where
 import Control.Comonad.Trans.Cofree (CofreeF ((:<)))
 import Data.Functor.Foldable (cata)
 import Data.Text qualified as T
-
-import Generic.Random (ConstrGen, constrGen, genericArbitraryRecG, uniform, withBaseCase)
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.QuickCheck
-import Text.Megaparsec (errorBundlePretty, parse)
+import Test.Tasty.QuickCheck (testProperty, (===))
 
 import Arbitrary ()
-import Parse.Layout (layout)
-import Parse.Lex (tokens)
-import Parse.Parse (tm)
-import Parse.Stream (TokenStream (..))
+import Parse.Parse (parseSyntax, term)
 import Pretty (render)
 import Syntax
 
@@ -23,14 +17,11 @@ terms :: TestTree
 terms =
   testGroup
     "Terms"
-    [testProperty "Random" \x -> x === parse' (T.pack $ show (render x))]
+    [testProperty "Random" random]
  where
-  parse' :: T.Text -> Tm Pat
-  parse' x = case parse tokens "<test>" x of
-    Left e -> error (errorBundlePretty e)
-    Right ts -> case parse tm "<test>" (TokenStream (T.lines x) (layout ts)) of
-      Left e -> error (errorBundlePretty e)
-      Right x -> cata f x
+  random x = case parseSyntax "<test>" (T.pack $ show $ render x) term of
+    Left e -> error (T.unpack e)
+    Right y -> x === cata f y
 
   -- TODO: There *must* be a cleaner way to achieve this.
   -- Maybe `refix` and `embed`?
