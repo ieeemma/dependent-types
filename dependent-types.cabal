@@ -12,6 +12,7 @@ common all
                         parser-combinators,
                         prettyprinter,
                         mtl,
+                        containers,
     default-language:   GHC2021
     other-modules:      Syntax, Pretty, Parse.Lex, Parse.Layout, Parse.Stream, Parse.Parse
     default-extensions: LambdaCase,
