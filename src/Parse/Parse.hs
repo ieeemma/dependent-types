@@ -20,6 +20,8 @@ import Syntax
 
 import Control.Comonad.Cofree (Cofree (..))
 import Control.Monad.Combinators.Expr (Operator (..), makeExprParser)
+import Data.List.NonEmpty (fromList)
+import Data.Set (singleton)
 import Data.Text (Text, lines, pack, unpack)
 import Data.Void (Void)
 import Text.Megaparsec hiding (Token, tokens)
@@ -48,10 +50,11 @@ spanned p = do
 
 -- | Parse a token of a given kind.
 tok :: TokenKind -> Parser Text
-tok tk = token f mempty -- TODO: fill in set
+tok tk = token f set
  where
   f (Token tk' t _) | tk == tk' = Just t
   f _ = Nothing
+  set = singleton $ Tokens $ fromList [Token tk "x" (SourcePos "" (mkPos 1) (mkPos 1))]
 
 -- | Parse an integer literal.
 int :: Parser Int
