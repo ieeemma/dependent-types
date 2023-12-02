@@ -70,6 +70,17 @@ upper = ident upperChar alphaNumChar
 int :: Parser Int
 int = lexeme $ try $ L.signed (pure ()) L.decimal
 
+-- | Parse a toplevel definition.
+tl :: Parser (ATl Span)
+tl =
+  spanned
+    $ choice
+      [ DefF <$> lower <*> (symbol ":" *> term) <*> (symbol "=" *> term)
+      , DataF <$> upper <*> (symbol ":" *> term) <*> (symbol "where" *> block con)
+      ]
+ where
+  con = (,) <$> upper <*> (symbol ":" *> term)
+
 -- | Parse a whole term with operator precedence.
 term :: Parser (ATm Span)
 term =

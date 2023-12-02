@@ -67,3 +67,4 @@ deriving instance Generic (Tm a)
 
 type APat a = Cofree PatF a
 type ATm a = Cofree (TmF (APat a)) a
+type ATl a = Cofree (TlF (ATm a)) a
