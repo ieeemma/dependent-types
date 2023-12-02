@@ -49,6 +49,17 @@ data Tm p
 
 makeBaseFunctor ''Tm
 
+{- | Top-level declarations can be one of:
+  * def x: σ = e
+  * data C: σ where (C₁: σ₁) | … | (Cₙ: σₙ)
+-}
+data Tl t
+  = Def Sym t t
+  | Data Sym t [(Sym, t)]
+  deriving (Eq, Show)
+
+makeBaseFunctor ''Tl
+
 -- Aliases for annotations
 
 deriving instance Generic Pat
