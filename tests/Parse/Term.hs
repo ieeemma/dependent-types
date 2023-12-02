@@ -5,13 +5,14 @@ module Parse.Term where
 import Control.Comonad.Trans.Cofree (CofreeF ((:<)))
 import Data.Functor.Foldable (cata)
 import Data.Text qualified as T
+import Prettyprinter (pretty)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (testProperty, (===))
 import Text.Megaparsec (eof, errorBundlePretty, parse)
 
 import Arbitrary ()
 import Parse (term, ws)
-import Pretty (render)
+import Pretty ()
 import Syntax
 
 terms :: TestTree
@@ -21,7 +22,7 @@ terms =
     [testProperty "Random" random]
  where
   random x =
-    let src = show (render x)
+    let src = show (pretty x)
      in case parse (ws *> term <* eof) "<test>" (T.pack src) of
           Left e -> error (src <> "\n\n" <> errorBundlePretty e)
           Right y -> x === cata f y

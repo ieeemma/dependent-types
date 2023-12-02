@@ -52,7 +52,7 @@ block p = symbol "{" *> p `sepEndBy` symbol ";" <* symbol "}"
 
 -- | Parse an identifier with start and rest parsers.
 ident :: Parser Char -> Parser Char -> Parser Text
-ident p ps = lexeme $ do
+ident p ps = lexeme $ try $ do
   x <- p
   xs <- many ps
   let s = pack (x : xs)
@@ -68,7 +68,7 @@ upper = ident upperChar alphaNumChar
 
 -- | Parse an integer.
 int :: Parser Int
-int = lexeme L.decimal
+int = lexeme $ try $ L.signed (pure ()) L.decimal
 
 -- | Parse a whole term with operator precedence.
 term :: Parser (ATm Span)
@@ -79,48 +79,50 @@ term =
   app x@(Span l _ :< _) y@(Span _ r :< _) = Span l r :< AppF x y
   arr x@(Span l _ :< _) y@(Span _ r :< _) = Span l r :< PiF "_" x y
 
-grouping :: Parser (ATm Span)
-grouping = try (spanned pi) <|> paren <|> atom
- where
-  pi =
-    PiF
-      <$> (symbol "(" *> lower)
-      <*> (symbol ":" *> term <* symbol ")")
-      <*> (symbol "->" *> term)
-  paren = between (symbol "(") (symbol ")") term
+  -- Parse a term grouping.
+  grouping = try (spanned pi) <|> paren <|> atom
+   where
+    pi =
+      PiF
+        <$> (symbol "(" *> lower)
+        <*> (symbol ":" *> term <* symbol ")")
+        <*> (symbol "->" *> term)
+    paren = between (symbol "(") (symbol ")") term
 
--- | Parse an atomic term.
-atom :: Parser (ATm Span)
-atom =
-  spanned
-    $ choice
-      [ LamF
-          <$> (symbol "λ" *> lower)
-          <*> (symbol "->" *> term)
-      , LetF
-          <$> (symbol "let" *> block bind)
-          <*> (symbol "in" *> term)
-      , CaseF
-          <$> (symbol "case" *> term)
-          <*> (symbol "of" *> block alt)
-      , LitF <$> int
-      , UF <$ symbol "Type"
-      , SymF <$> lower
-      , ConF <$> upper
-      ]
- where
+  -- Parse an atomic term.
+  atom =
+    spanned
+      $ choice
+        [ LamF
+            <$> (symbol "λ" *> lower)
+            <*> (symbol "->" *> term)
+        , LetF
+            <$> (symbol "let" *> block bind)
+            <*> (symbol "in" *> term)
+        , CaseF
+            <$> (symbol "case" *> term)
+            <*> (symbol "of" *> block alt)
+        , LitF <$> int
+        , UF <$ symbol "Type"
+        , SymF <$> lower
+        , ConF <$> upper
+        ]
+
   bind = (,,) <$> lower <*> (symbol ":" *> term) <*> (symbol "=" *> term)
   alt = (,) <$> pat <*> (symbol "->" *> term)
 
 -- | Parse a pattern.
 pat :: Parser (APat Span)
-pat =
-  spanned
-    $ choice
-      [ DestructF
-          <$> lower
-          <*> many pat
-      , BindF <$> lower
-      , IsLitF <$> int
-      , WildF <$ symbol "_"
-      ]
+pat = paren <|> atom
+ where
+  paren = between (symbol "(") (symbol ")") pat
+  atom =
+    spanned
+      $ choice
+        [ DestructF
+            <$> upper
+            <*> many pat
+        , BindF <$> lower
+        , IsLitF <$> int
+        , WildF <$ symbol "_"
+        ]
