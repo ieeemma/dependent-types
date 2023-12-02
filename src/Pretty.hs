@@ -37,8 +37,8 @@ instance (Recursive p, Render (Base p)) => Render (TmF p) where
     PiF x σ π -> "(" <> pretty x <> ":" <+> σ <> ")" <+> "->" <+> π
     LamF x e -> "λ" <> pretty x <+> "->" <+> e
     AppF e₁ e₂ -> e₁ <+> e₂
-    LetF bs e -> "let" <> block (bind <$> bs) <+> "in" <+> e
-    CaseF e ps -> "case" <+> e <+> "of" <> block (alt <$> ps)
+    LetF bs e -> "let" <+> block (bind <$> bs) <+> "in" <+> e
+    CaseF e ps -> "case" <+> e <+> "of" <+> block (alt <$> ps)
     SymF x -> pretty x
     ConF x -> pretty x
     LitF n -> pretty n
@@ -69,4 +69,4 @@ instance Render PatF where
 
 -- | Line-separate and indent a list of `Doc`s.
 block :: [Doc ann] -> Doc ann
-block = (line <>) . vsep . map (indent 2)
+block xs = "{" <> line <> vsep [indent 2 x <> ";" | x <- xs] <> "}"
