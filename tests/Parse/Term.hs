@@ -7,10 +7,10 @@ import Data.Functor.Foldable (cata)
 import Data.Text qualified as T
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (testProperty, (===))
+import Text.Megaparsec (eof, errorBundlePretty, parse)
 
 import Arbitrary ()
-import Parse.Lex (Token (..))
-import Parse.Parse (parseSyntax, term)
+import Parse (term, ws)
 import Pretty (render)
 import Syntax
 
@@ -22,9 +22,9 @@ terms =
  where
   random x =
     let src = show (render x)
-     in case parseSyntax "<test>" (T.pack src) term of
-          (ts, Left e) -> error (src <> "\n\n" <> T.unpack (T.intercalate " " [t | Token _ t _ <- ts]) <> "\n\n" <> T.unpack e)
-          (_, Right y) -> x === cata f y
+     in case parse (ws *> term <* eof) "<test>" (T.pack src) of
+          Left e -> error (src <> "\n\n" <> errorBundlePretty e)
+          Right y -> x === cata f y
 
   -- TODO: There *must* be a cleaner way to achieve this.
   -- Maybe `refix` and `embed`?

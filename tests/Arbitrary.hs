@@ -13,8 +13,9 @@ module Arbitrary () where
 import Data.Proxy (Proxy (..))
 import Data.Text qualified as T
 import Generic.Random (constrGen, genericArbitraryRecG, listOf1', uniform, withBaseCase, (:+) (..))
-import Syntax
 import Test.Tasty.QuickCheck (Arbitrary (..), Gen, oneof)
+
+import Syntax
 
 lower, upper :: Gen T.Text
 lower = oneof (pure . T.singleton <$> "xyzαβ")
