@@ -1,10 +1,17 @@
 module Pretty where
 
 import Control.Applicative (liftA2)
-import Data.Functor.Foldable (para)
+import Data.Functor.Foldable (cata, para)
 import Prettyprinter (Doc, Pretty (..), hsep, indent, line, vsep, (<+>))
 
 import Syntax
+
+instance (Pretty t) => Pretty (Tl t) where
+  pretty = cata \case
+    DefF x σ e -> pretty x <> ":" <+> pretty σ <+> "=" <+> pretty e
+    DataF x σ cs -> "data" <+> pretty x <+> ":" <+> pretty σ <+> block (con <$> cs)
+   where
+    con (x, σ) = pretty x <+> ":" <+> pretty σ
 
 instance (Pretty p) => Pretty (Tm p) where
   pretty = para \case
