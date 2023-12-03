@@ -59,7 +59,7 @@ ident p ps = lexeme $ try $ do
   when (s `elem` keywords) $ fail ("keyword " <> show s <> " cannot be an identifier")
   pure s
  where
-  keywords = ["let", "in", "case", "of", "Type"]
+  keywords = ["let", "in", "case", "of", "Type", "data"]
 
 -- | Parse lowercase and uppercase identifiers.
 lower, upper :: Parser Text
@@ -75,8 +75,8 @@ tl :: Parser (ATl Span)
 tl =
   spanned
     $ choice
-      [ DefF <$> lower <*> (symbol ":" *> term) <*> (symbol "=" *> term)
-      , DataF <$> upper <*> (symbol ":" *> term) <*> (symbol "where" *> block con)
+      [ DataF <$> (symbol "data" *> upper) <*> (symbol ":" *> term) <*> block con
+      , DefF <$> lower <*> (symbol ":" *> term) <*> (symbol "=" *> term)
       ]
  where
   con = (,) <$> upper <*> (symbol ":" *> term)
