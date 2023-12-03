@@ -30,7 +30,7 @@ executable dependent-types
     import:             all
     main-is:            Main.hs
     hs-source-dirs:     src
-    other-modules:      Infer.Value
+    other-modules:      Infer.Value, Infer.Eval
 
 test-suite tests
     import:             all
