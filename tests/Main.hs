@@ -1,13 +1,12 @@
 module Main where
 
 import Test.Tasty (TestTree, defaultMain, testGroup)
-
 import Test.Tasty.QuickCheck (testProperty)
 
-import Parse.Term (terms)
+import ParseTests (parseTests)
 
 main :: IO ()
-main = defaultMain $ testGroup "Tests" [terms]
+main = defaultMain $ testGroup "Tests" [parseTests]
 
 -- Test the identity `sin²θ ≡ (1 - cos 2θ) ÷ 2`
 identity :: TestTree
