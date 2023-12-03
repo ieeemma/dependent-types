@@ -11,9 +11,10 @@ module Arbitrary () where
 
 import Data.Proxy (Proxy (..))
 import Data.Text qualified as T
-import Generic.Random (constrGen, genericArbitraryG, genericArbitraryRecG, uniform, withBaseCase)
-import Test.Tasty.QuickCheck (Arbitrary (..), Gen, oneof)
+import Generic.Random (constrGen, genericArbitraryRecG, uniform, withBaseCase)
+import Test.Tasty.QuickCheck (Arbitrary (..), Gen, listOf, oneof)
 
+import Control.Applicative (Applicative (liftA2))
 import Syntax
 
 -- TODO: use newtypes for lower/upper rather than custom generators.
@@ -26,9 +27,13 @@ instance Arbitrary Sym where
   arbitrary = lower
 
 instance (Arbitrary t) => Arbitrary (Tl t) where
-  arbitrary = genericArbitraryG gens uniform
+  arbitrary =
+    oneof
+      [ Def <$> lower <*> arbitrary <*> arbitrary
+      , Data <$> upper <*> arbitrary <*> listOf constr
+      ]
    where
-    gens = constrGen (Proxy :: Proxy '("Data", 0)) upper
+    constr = liftA2 (,) upper arbitrary
 
 instance (Arbitrary p) => Arbitrary (Tm p) where
   arbitrary = genericArbitraryRecG gens uniform `withBaseCase` base

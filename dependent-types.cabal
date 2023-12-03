@@ -32,7 +32,7 @@ test-suite tests
     import:             all
     type:               exitcode-stdio-1.0
     main-is:            Main.hs
-    other-modules:      Arbitrary, Parse, Parse.Term
+    other-modules:      Arbitrary, Deannotate, ParseTests, Parse
     hs-source-dirs:     tests, src
     build-depends:      tasty ^>=1.5,
                         tasty-quickcheck,
