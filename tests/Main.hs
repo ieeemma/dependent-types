@@ -3,7 +3,7 @@ module Main where
 import Test.Tasty (TestTree, defaultMain, testGroup)
 import Test.Tasty.QuickCheck (testProperty)
 
-import ParseTests (parseTests)
+import Test.Parse (parseTests)
 
 main :: IO ()
 main = defaultMain $ testGroup "Tests" [parseTests]

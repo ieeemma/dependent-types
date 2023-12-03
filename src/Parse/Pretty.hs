@@ -1,4 +1,4 @@
-module Pretty where
+module Parse.Pretty where
 
 import Control.Applicative (liftA2)
 import Data.Functor.Foldable (cata, para)
