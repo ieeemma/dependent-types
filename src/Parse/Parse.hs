@@ -1,7 +1,7 @@
 {- | This module implements the  parser.
 The grammar can be found in `docs/grammar`.
 -}
-module Parse where
+module Parse.Parse where
 
 import Control.Comonad.Cofree (Cofree ((:<)))
 import Data.Text (Text, pack)
