@@ -64,6 +64,7 @@ makeBaseFunctor ''Tl
 
 deriving instance Generic Pat
 deriving instance Generic (Tm a)
+deriving instance Generic (Tl a)
 
 type APat a = Cofree PatF a
 type ATm a = Cofree (TmF (APat a)) a
