@@ -16,6 +16,7 @@ common all
                         unordered-containers,
     default-language:   GHC2021
     other-modules:      Syntax,
+                        Util,
                         Parse.Pretty, Parse.Parse
     default-extensions: LambdaCase,
                         OverloadedStrings,
