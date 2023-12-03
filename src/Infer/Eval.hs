@@ -13,12 +13,11 @@ never be evaluated as they are not used.
 -}
 module Infer.Eval where
 
+import Control.Applicative (liftA2)
 import Control.Arrow ((>>>))
 import Control.Monad.Reader (asks, local, runReader)
-import Data.HashMap.Strict (fromList, insert, singleton, union, (!))
-
-import Control.Applicative (Applicative (liftA2))
 import Data.Bifunctor (second)
+import Data.HashMap.Strict (fromList, insert, singleton, union, (!))
 import Infer.Value
 import Syntax
 import Util (paraM)
@@ -74,5 +73,5 @@ match = curry \case
  where
   go x = curry \case
     ([], VCon y) | x == y -> Just mempty
-    (p : ps, VApp v₁ v₂) -> liftA2 union (match p v₁) (go x ps v₂)
+    (p : ps, VApp v₁ v₂) -> liftA2 union (go x ps v₁) (match p v₂)
     _ -> Nothing
