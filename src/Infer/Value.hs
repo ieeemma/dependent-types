@@ -9,11 +9,11 @@ Type checking converts terms to values (`eval`) and values to terms (`quote`).
 module Infer.Value where
 
 import Data.Functor.Foldable.TH (makeBaseFunctor)
-import Data.HashMap.Strict (HashMap)
+import Data.Map (Map)
 
 import Syntax
 
--- TODO: De-Brauijn indices for better performance.
+-- TODO: De-Bruijn indices for better performance.
 
 {- | Values mirror terms, but without `let` and `case`.
 Also stores closures on Π and λ.
@@ -32,13 +32,9 @@ This captures the scope of a function.
 For example, in `λx -> fx`, the closure captures the value of `f` as
 it is free.
 -}
-data Clos = Clos Env (Tm Pat)
+data Clos = forall a. Clos Env (ATm a)
 
-{- | Environments map symbols to values.
-A `HashMap` is used over a `Map` here as they are generally faster,
-but have worse union performance.
-This might need to be changed in the future.
--}
-type Env = HashMap Sym Val
+-- | Environments map symbols to values.
+type Env = Map Sym Val
 
 makeBaseFunctor ''Val
