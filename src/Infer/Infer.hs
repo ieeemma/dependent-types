@@ -1,4 +1,4 @@
-module Infer where
+module Infer.Infer where
 
 import Control.Arrow ((>>>))
 import Control.Comonad.Cofree (Cofree ((:<)))
@@ -7,13 +7,15 @@ import Control.Monad.Except (Except, throwError)
 import Control.Monad.Reader (ReaderT, asks, local)
 import Data.Map (fromList, insert, lookup, union)
 import Data.Text (Text)
+import Prettyprinter (pretty)
 import Prelude hiding (lookup)
 
 import Infer.Eval (apply, eval)
 import Infer.Quote (quote)
 import Infer.Value (Env, Val (..))
 import Parse.Parse (Span)
-import Syntax (ATm, TmF (..))
+import Parse.Pretty ()
+import Syntax
 
 type Infer = ReaderT Env (Except String)
 
@@ -28,7 +30,7 @@ check (sp :< tm) τ = case (tm, τ) of
     π <- infer (sp :< tm)
     unless (conv π τ) $
       throwError $
-        "Expected " <> show (quote τ) <> ", found " <> show (quote π)
+        "Expected " <> show (pretty (quote τ)) <> ", found " <> show (pretty (quote π))
 
 -- | Bidirectional type inference.
 infer :: ATm Span -> Infer Val
