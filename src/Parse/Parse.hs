@@ -73,8 +73,8 @@ int = lexeme $ try $ L.signed (pure ()) L.decimal
 -- | Parse a toplevel definition.
 tl :: Parser (ATl Span)
 tl =
-  spanned
-    $ choice
+  spanned $
+    choice
       [ DataF <$> (symbol "data" *> upper) <*> (symbol ":" *> term) <*> block con
       , DefF <$> lower <*> (symbol ":" *> term) <*> (symbol "=" *> term)
       ]
@@ -85,7 +85,7 @@ tl =
 term :: Parser (ATm Span)
 term =
   -- TODO: custom operator precedence for terms and patterns.
-  makeExprParser grouping [[InfixL (pure app)], [InfixR (pure arr)]]
+  makeExprParser grouping [[InfixL (pure app)], [InfixR (arr <$ symbol "->")]]
  where
   app x@(Span l _ :< _) y@(Span _ r :< _) = Span l r :< AppF x y
   arr x@(Span l _ :< _) y@(Span _ r :< _) = Span l r :< PiF "_" x y
@@ -102,8 +102,8 @@ term =
 
   -- Parse an atomic term.
   atom =
-    spanned
-      $ choice
+    spanned $
+      choice
         [ LamF
             <$> (symbol "λ" *> lower)
             <*> (symbol "->" *> term)
@@ -128,8 +128,8 @@ pat = paren <|> atom
  where
   paren = between (symbol "(") (symbol ")") pat
   atom =
-    spanned
-      $ choice
+    spanned $
+      choice
         [ DestructF
             <$> upper
             <*> many pat
