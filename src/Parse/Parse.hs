@@ -73,7 +73,7 @@ int = lexeme $ try $ L.signed (pure ()) L.decimal
 -- | Parse a file.
 file :: Parser (ATm Span)
 file = do
-  bs <- bind `sepEndBy` symbol ";"
+  bs <- ws *> bind `sepEndBy` symbol ";" <* eof
   pure (error "TODO" :< LetF bs (error "TODO" :< SymF "main"))
 
 -- | Parse a whole term with operator precedence.
