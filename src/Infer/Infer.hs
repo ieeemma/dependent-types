@@ -4,7 +4,7 @@ import Control.Comonad.Cofree (Cofree ((:<)))
 import Control.Monad (unless)
 import Control.Monad.Except (Except, throwError)
 import Control.Monad.Reader (ReaderT, asks, local)
-import Data.Map (insert, lookup)
+import Data.Map (fromList, insert, lookup)
 import Prettyprinter (pretty)
 import Prelude hiding (lookup)
 
@@ -17,11 +17,6 @@ import Syntax
 
 data Ctx = Ctx {types :: Env, values :: Env}
 
--- It doesn't seem worth importing a lens library just for this...
--- bindₜ, bindᵥ :: Sym -> Val -> Infer a -> Infer a
--- bindₜ x τ = local (\c -> c{types = insert x τ (types c)})
--- bindᵥ x v = local (\c -> c{values = insert x v (values c)})
-
 bind :: Sym -> Val -> Infer a -> Infer a
 bind x τ = local \c ->
   c{types = insert x τ (types c)}
@@ -32,11 +27,19 @@ def x τ v = local \c ->
 
 -- TODO:
 -- [x] pass around a context of variable types and current env
--- [ ] implement `binds` using this and update `eval`
+-- [x] implement `binds` using this and update `eval`
 -- [ ] pass around constructors in the context
 -- [ ] update constr inference and pattern matching to use this
 -- [ ] implement pattern matching inference
 type Infer = ReaderT Ctx (Except String)
+
+-- | Evaluate a term using the environment within the monad.
+evalM :: ATm Span -> Infer Val
+evalM t = asks ((`eval` t) . values)
+
+-- | Check that a term has a given type, then evaluate it.
+ensure :: ATm Span -> Val -> Infer Val
+ensure t τ = check t τ *> evalM t
 
 -- | Bidirectional type checking.
 check :: ATm Span -> Val -> Infer ()
@@ -54,8 +57,7 @@ infer :: ATm Span -> Infer Val
 infer (_ :< tm) = case tm of
   -- Π checks that σ is a type, then π is a type under x:σ
   PiF x σ π -> do
-    check σ VU
-    σ' <- asks ((`eval` σ) . values)
+    σ' <- ensure σ VU
     bind x σ' (check π VU)
     pure VU
   -- λ cannot be inferred, only checked
@@ -65,7 +67,7 @@ infer (_ :< tm) = case tm of
     infer e₁ >>= \case
       VPi x τ c -> do
         check e₂ τ
-        asks $ apply c x . flip eval e₂ . values
+        apply c x <$> evalM e₂
       _ -> throwError "Not a function"
   -- Let checks the bindings, then infers the body
   LetF bs e -> binds bs (infer e)
@@ -101,4 +103,15 @@ conv = curry \case
 
 -- | Check the bindings of a let expression.
 binds :: [Bind (ATm Span)] -> Infer a -> Infer a
-binds bs m = error "TODO"
+binds [] m = m
+binds (Def x σ e : bs) m = do
+  σᵥ <- ensure σ VU
+  eᵥ <- ensure e σᵥ
+  def x σᵥ eᵥ (binds bs m)
+binds (Data x σ cs : bs) m = do
+  σᵥ <- ensure σ VU
+  bind x σᵥ do
+    let (xs, σs) = unzip cs
+    σsᵥ <- (`ensure` VU) `traverse` σs
+    let cs' = fromList (zip xs σsᵥ)
+    local (\c -> c{types = cs' <> types c}) (binds bs m)
