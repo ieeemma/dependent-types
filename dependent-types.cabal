@@ -4,21 +4,21 @@ version:            0.1.0.0
 
 common all
     build-depends:      base ^>=4.17.2.0,
-                        text,
-                        recursion-schemes,
-                        comonad,
-                        free,
-                        megaparsec,
-                        parser-combinators,
-                        prettyprinter,
-                        mtl,
-                        containers,
-                        unordered-containers,
-                        diagnose,
+                        text ^>=2.0,
+                        recursion-schemes ^>=5.2.2.5,
+                        comonad ^>=5.0.8,
+                        free ^>=5.2,
+                        megaparsec ^>=9.6.1,
+                        parser-combinators ^>=1.3.0,
+                        prettyprinter ^>=1.7.1,
+                        mtl ^>=2.3.1,
+                        containers ^>=0.6,
+                        diagnose ^>=2.0,
     default-language:   GHC2021
     other-modules:      Syntax,
                         Util,
-                        Parse.Pretty, Parse.Parse
+                        Parse.Pretty, Parse.Parse,
+                        Infer.Value, Infer.Eval, Infer.Quote, Infer.Infer
     default-extensions: LambdaCase,
                         OverloadedStrings,
                         BlockArguments
@@ -31,7 +31,6 @@ executable dependent-types
     import:             all
     main-is:            Main.hs
     hs-source-dirs:     src
-    other-modules:      Infer.Value, Infer.Eval, Infer.Quote, Infer.Infer
 
 test-suite tests
     import:             all
