@@ -1,17 +1,10 @@
 module Parse.Pretty where
 
 import Control.Applicative (liftA2)
-import Data.Functor.Foldable (cata, para)
+import Data.Functor.Foldable (para)
 import Prettyprinter (Doc, Pretty (..), hsep, indent, line, vsep, (<+>))
 
 import Syntax
-
-instance (Pretty t) => Pretty (Tl t) where
-  pretty = cata \case
-    DefF x σ e -> pretty x <> ":" <+> pretty σ <+> "=" <+> pretty e
-    DataF x σ cs -> "data" <+> pretty x <+> ":" <+> pretty σ <+> block (con <$> cs)
-   where
-    con (x, σ) = pretty x <+> ":" <+> pretty σ
 
 instance (Pretty p) => Pretty (Tm p) where
   pretty = para \case
@@ -19,14 +12,13 @@ instance (Pretty p) => Pretty (Tm p) where
     PiF x (_, σ) (_, π) -> "(" <> pretty x <+> ":" <+> σ <> ")" <+> "->" <+> π
     LamF x (_, e) -> "λ" <> pretty x <+> "->" <+> e
     AppF e₁ e₂ -> paren (liftA2 (||) atom app) e₁ <+> paren atom e₂
-    LetF bs (_, e) -> "let" <+> block (bind <$> bs) <+> "in" <+> e
+    LetF bs (_, e) -> "let" <+> block (pretty . fmap fst <$> bs) <+> "in" <+> e
     CaseF (_, e) ps -> "case" <+> e <+> "of" <+> block (alt <$> ps)
     SymF x -> pretty x
     ConF x -> pretty x
     LitF n -> pretty n
     UF -> "Type"
    where
-    bind (x, (_, σ), (_, e)) = pretty x <> ":" <+> σ <+> "=" <+> e
     alt (p, (_, e)) = pretty p <+> "->" <+> e
 
     arrow = \case
@@ -42,6 +34,13 @@ instance (Pretty p) => Pretty (Tm p) where
       Let{} -> False
       Case{} -> False
       _ -> True
+
+instance (Pretty t) => Pretty (Bind t) where
+  pretty = \case
+    Def x σ e -> pretty x <> ":" <+> pretty σ <+> "=" <+> pretty e
+    Data x σ cs -> "data" <+> pretty x <+> ":" <+> pretty σ <+> block (con <$> cs)
+   where
+    con (x, σ) = pretty x <+> ":" <+> pretty σ
 
 instance Pretty Pat where
   pretty = para \case

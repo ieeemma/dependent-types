@@ -70,16 +70,11 @@ upper = ident upperChar alphaNumChar
 int :: Parser Int
 int = lexeme $ try $ L.signed (pure ()) L.decimal
 
--- | Parse a toplevel definition.
-tl :: Parser (ATl Span)
-tl =
-  spanned $
-    choice
-      [ DataF <$> (symbol "data" *> upper) <*> (symbol ":" *> term) <*> block con
-      , DefF <$> lower <*> (symbol ":" *> term) <*> (symbol "=" *> term)
-      ]
- where
-  con = (,) <$> upper <*> (symbol ":" *> term)
+-- | Parse a file.
+file :: Parser (ATm Span)
+file = do
+  bs <- bind `sepEndBy` symbol ";"
+  pure (error "TODO" :< LetF bs (error "TODO" :< SymF "main"))
 
 -- | Parse a whole term with operator precedence.
 term :: Parser (ATm Span)
@@ -119,8 +114,17 @@ term =
         , ConF <$> upper
         ]
 
-  bind = (,,) <$> lower <*> (symbol ":" *> term) <*> (symbol "=" *> term)
   alt = (,) <$> pat <*> (symbol "->" *> term)
+
+-- | Parse a toplevel definition.
+bind :: Parser (Bind (ATm Span))
+bind =
+  choice
+    [ Data <$> (symbol "data" *> upper) <*> (symbol ":" *> term) <*> block con
+    , Def <$> lower <*> (symbol ":" *> term) <*> (symbol "=" *> term)
+    ]
+ where
+  con = (,) <$> upper <*> (symbol ":" *> term)
 
 -- | Parse a pattern.
 pat :: Parser (APat Span)

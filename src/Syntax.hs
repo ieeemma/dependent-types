@@ -25,6 +25,15 @@ data Pat
 
 makeBaseFunctor ''Pat
 
+{- | Bindings can be one of:
+  * def x: σ = e
+  * data C: σ where (C₁: σ₁) | … | (Cₙ: σₙ)
+-}
+data Bind t
+  = Def Sym t t
+  | Data Sym t [(Sym, t)]
+  deriving (Eq, Show, Functor, Foldable, Traversable)
+
 {- | Terms can be one of:
   * Π x σ π
   * λ x e
@@ -39,7 +48,7 @@ data Tm p
   = Pi Sym (Tm p) (Tm p)
   | Lam Sym (Tm p)
   | App (Tm p) (Tm p)
-  | Let [(Sym, Tm p, Tm p)] (Tm p)
+  | Let [Bind (Tm p)] (Tm p)
   | Case (Tm p) [(p, Tm p)]
   | Sym Sym
   | Con Sym
@@ -49,23 +58,10 @@ data Tm p
 
 makeBaseFunctor ''Tm
 
-{- | Top-level declarations can be one of:
-  * def x: σ = e
-  * data C: σ where (C₁: σ₁) | … | (Cₙ: σₙ)
--}
-data Tl t
-  = Def Sym t t
-  | Data Sym t [(Sym, t)]
-  deriving (Eq, Show)
-
-makeBaseFunctor ''Tl
-
 -- Aliases for annotations
 
 deriving instance Generic Pat
 deriving instance Generic (Tm a)
-deriving instance Generic (Tl a)
 
 type APat a = Cofree PatF a
 type ATm a = Cofree (TmF (APat a)) a
-type ATl a = Cofree (TlF (ATm a)) a

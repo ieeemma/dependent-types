@@ -26,15 +26,6 @@ upper = oneof (pure . T.singleton <$> "XYZℕΣ")
 instance Arbitrary Sym where
   arbitrary = lower
 
-instance (Arbitrary t) => Arbitrary (Tl t) where
-  arbitrary =
-    oneof
-      [ Def <$> lower <*> arbitrary <*> arbitrary
-      , Data <$> upper <*> arbitrary <*> listOf constr
-      ]
-   where
-    constr = liftA2 (,) upper arbitrary
-
 instance (Arbitrary p) => Arbitrary (Tm p) where
   arbitrary = genericArbitraryRecG gens uniform `withBaseCase` base
    where
@@ -46,6 +37,15 @@ instance (Arbitrary p) => Arbitrary (Tm p) where
         , Lit <$> arbitrary
         , pure U
         ]
+
+instance (Arbitrary t) => Arbitrary (Bind t) where
+  arbitrary =
+    oneof
+      [ Def <$> lower <*> arbitrary <*> arbitrary
+      , Data <$> upper <*> arbitrary <*> listOf constr
+      ]
+   where
+    constr = liftA2 (,) upper arbitrary
 
 instance Arbitrary Pat where
   arbitrary = genericArbitraryRecG gens uniform `withBaseCase` base

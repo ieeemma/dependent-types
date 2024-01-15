@@ -1,12 +1,10 @@
 module Infer.Infer where
 
-import Control.Arrow ((>>>))
 import Control.Comonad.Cofree (Cofree ((:<)))
-import Control.Monad (unless, zipWithM_)
+import Control.Monad (unless)
 import Control.Monad.Except (Except, throwError)
 import Control.Monad.Reader (ReaderT, asks, local)
-import Data.Map (fromList, insert, lookup, union)
-import Data.Text (Text)
+import Data.Map (insert, lookup, union)
 import Prettyprinter (pretty)
 import Prelude hiding (lookup)
 
@@ -60,7 +58,10 @@ infer (_ :< tm) = case tm of
     asks (lookup x) >>= \case
       Just v -> pure v
       Nothing -> throwError "Unbound symbol"
-  ConF _ -> throwError "Not implemented"
+  ConF c ->
+    asks (lookup c) >>= \case
+      Just v -> pure v
+      Nothing -> throwError "Unbound symbol"
   -- Literals are of type Int
   LitF _ -> pure (VCon "Int")
   -- U is a type
@@ -82,9 +83,5 @@ conv = curry \case
   _ -> False
 
 -- | Check the bindings of a let expression.
-binds :: [(Text, ATm Span, ATm Span)] -> Infer Env
-binds bs = do
-  let (x, σ, e) = unzip3 bs
-  τ <- asks (eval >>> (<$> σ))
-  zipWithM_ check e τ
-  pure $ fromList (zip x τ)
+binds :: [Bind (ATm Span)] -> Infer Env
+binds = error "TODO"
