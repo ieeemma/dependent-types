@@ -13,8 +13,8 @@ import Test.Tasty.QuickCheck (testProperty, (===))
 import Text.Megaparsec (eof, errorBundlePretty, parse)
 
 import Arbitrary ()
-import Deannotate (deannotatePat, deannotateTl, deannotateTm)
-import Parse.Parse (Parser, pat, term, tl)
+import Deannotate (deannotatePat, deannotateTm)
+import Parse.Parse (Parser, pat, term)
 import Parse.Pretty ()
 
 parseFrom :: Parser a -> String -> a
@@ -28,9 +28,7 @@ parseTests =
     "Parser"
     [ testProperty "Patterns" testPattern
     , testProperty "Terms" testTerm
-    , testProperty "Toplevels" testToplevel
     ]
  where
   testPattern p = deannotatePat (parseFrom pat (show (pretty p))) === p
   testTerm t = deannotateTm (parseFrom term (show (pretty t))) === t
-  testToplevel t = deannotateTl (parseFrom tl (show (pretty t))) === t

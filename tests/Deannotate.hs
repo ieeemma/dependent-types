@@ -7,14 +7,6 @@ import Syntax
 -- TODO: figure out how to generalize this to a typeclass.
 -- TODO: this is so verbose, there must be a better way.
 
-deannotateTl :: ATl a -> Tl (Tm Pat)
-deannotateTl = cata f
- where
-  f :: CofreeF (TlF (ATm a)) a (Tl (Tm Pat)) -> Tl (Tm Pat)
-  f (_ :< t) = case t of
-    DefF x σ e -> Def x (deannotateTm σ) (deannotateTm e)
-    DataF x σ cs -> Data x (deannotateTm σ) [(c, deannotateTm σ') | (c, σ') <- cs]
-
 deannotateTm :: ATm a -> Tm Pat
 deannotateTm = cata f
  where

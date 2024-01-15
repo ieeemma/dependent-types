@@ -18,6 +18,7 @@ import Control.Comonad.Trans.Cofree (tailF)
 import Data.Bifunctor (second)
 import Data.Functor.Foldable (para)
 import Data.Map (fromList, insert, singleton, union, (!))
+import Data.Maybe (mapMaybe)
 
 import Infer.Value
 import Syntax
@@ -47,7 +48,12 @@ eval env = para (tailF >>> f)
     LitF n -> VLit n
     UF -> VU
 
-  binds bs = fromList [(x, v) | (x, (_, v), _) <- bs]
+  -- TODO: Okay, this is just wrong.
+  -- I think the environment needs to store constructors too.
+  binds =
+    fromList . mapMaybe \case
+      Def x _ (_, v) -> Just (x, v)
+      _ -> Nothing
 
   matches _ [] = error "Non-exhaustive patterns"
   matches v ((p, t) : ps) = case match p v of
