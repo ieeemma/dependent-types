@@ -4,7 +4,7 @@ import Control.Comonad.Cofree (Cofree ((:<)))
 import Control.Monad (unless)
 import Control.Monad.Except (Except, throwError)
 import Control.Monad.Reader (ReaderT, asks, local)
-import Data.Map (insert, lookup, union)
+import Data.Map (insert, lookup)
 import Prettyprinter (pretty)
 import Prelude hiding (lookup)
 
@@ -15,15 +15,34 @@ import Parse.Parse (Span)
 import Parse.Pretty ()
 import Syntax
 
-type Infer = ReaderT Env (Except String)
+data Ctx = Ctx {types :: Env, values :: Env}
+
+-- It doesn't seem worth importing a lens library just for this...
+-- bindₜ, bindᵥ :: Sym -> Val -> Infer a -> Infer a
+-- bindₜ x τ = local (\c -> c{types = insert x τ (types c)})
+-- bindᵥ x v = local (\c -> c{values = insert x v (values c)})
+
+bind :: Sym -> Val -> Infer a -> Infer a
+bind x τ = local \c ->
+  c{types = insert x τ (types c)}
+
+def :: Sym -> Val -> Val -> Infer a -> Infer a
+def x τ v = local \c ->
+  c{types = insert x τ (types c), values = insert x v (values c)}
+
+-- TODO:
+-- [x] pass around a context of variable types and current env
+-- [ ] implement `binds` using this and update `eval`
+-- [ ] pass around constructors in the context
+-- [ ] update constr inference and pattern matching to use this
+-- [ ] implement pattern matching inference
+type Infer = ReaderT Ctx (Except String)
 
 -- | Bidirectional type checking.
 check :: ATm Span -> Val -> Infer ()
 check (sp :< tm) τ = case (tm, τ) of
-  (LamF x e, VPi y σ c) -> local (insert x σ) (check e $ apply c y (VSym x))
-  (LetF bs e, _) -> do
-    γ <- binds bs
-    local (γ `union`) (check e τ)
+  (LamF x e, VPi y σ c) -> bind x σ (check e $ apply c y (VSym x))
+  (LetF bs e, _) -> binds bs (check e τ)
   _ -> do
     π <- infer (sp :< tm)
     unless (conv π τ) $
@@ -36,8 +55,8 @@ infer (_ :< tm) = case tm of
   -- Π checks that σ is a type, then π is a type under x:σ
   PiF x σ π -> do
     check σ VU
-    σ' <- asks (`eval` σ)
-    local (insert x σ') (check π VU)
+    σ' <- asks ((`eval` σ) . values)
+    bind x σ' (check π VU)
     pure VU
   -- λ cannot be inferred, only checked
   LamF _ _ -> throwError "Cannot infer lambda type, try annotating"
@@ -46,20 +65,18 @@ infer (_ :< tm) = case tm of
     infer e₁ >>= \case
       VPi x τ c -> do
         check e₂ τ
-        asks $ apply c x . flip eval e₂
+        asks $ apply c x . flip eval e₂ . values
       _ -> throwError "Not a function"
   -- Let checks the bindings, then infers the body
-  LetF bs e -> do
-    γ <- binds bs
-    local (γ `union`) (infer e)
+  LetF bs e -> binds bs (infer e)
   CaseF _ _ -> throwError "Not implemented"
   -- Symbols are looked up in the environment
   SymF x ->
-    asks (lookup x) >>= \case
+    asks (lookup x . types) >>= \case
       Just v -> pure v
       Nothing -> throwError "Unbound symbol"
   ConF c ->
-    asks (lookup c) >>= \case
+    asks (lookup c . types) >>= \case
       Just v -> pure v
       Nothing -> throwError "Unbound symbol"
   -- Literals are of type Int
@@ -83,5 +100,5 @@ conv = curry \case
   _ -> False
 
 -- | Check the bindings of a let expression.
-binds :: [Bind (ATm Span)] -> Infer Env
-binds = error "TODO"
+binds :: [Bind (ATm Span)] -> Infer a -> Infer a
+binds bs m = error "TODO"
