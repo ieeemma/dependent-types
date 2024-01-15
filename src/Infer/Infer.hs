@@ -8,7 +8,7 @@ import Data.Map (fromList, insert, lookup)
 import Prettyprinter (pretty)
 import Prelude hiding (lookup)
 
-import Infer.Eval (apply, eval)
+import Infer.Eval (apply, conv, eval)
 import Infer.Quote (quote)
 import Infer.Value (Env, Val (..))
 import Parse.Parse (Span)
@@ -85,21 +85,6 @@ infer (_ :< tm) = case tm of
   LitF _ -> pure (VCon "Int")
   -- U is a type
   UF -> pure VU
-
--- | Beta-eta equality. Both values must have the same type!
-conv :: Val -> Val -> Bool
-conv = curry \case
-  (VPi x τ c, VPi y σ d) ->
-    conv τ σ && conv (apply c x (VSym x)) (apply d y (VSym y))
-  (VLam x c, VLam y d) ->
-    conv (apply c x (VSym x)) (apply d y (VSym y))
-  (VApp e₁ e₂, VApp e₃ e₄) ->
-    conv e₁ e₃ && conv e₂ e₄
-  (VSym x, VSym y) -> x == y
-  (VCon x, VCon y) -> x == y
-  (VLit x, VLit y) -> x == y
-  (VU, VU) -> True
-  _ -> False
 
 -- | Check the bindings of a let expression.
 binds :: [Bind (ATm Span)] -> Infer a -> Infer a

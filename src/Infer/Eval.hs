@@ -79,3 +79,18 @@ match = curry \case
     ([], VCon y) | x == y -> Just mempty
     (p : ps, VApp v₁ v₂) -> liftA2 union (go x ps v₁) (match p v₂)
     _ -> Nothing
+
+-- | Beta-eta equality. Both values must have the same type!
+conv :: Val -> Val -> Bool
+conv = curry \case
+  (VPi x τ c, VPi y σ d) ->
+    conv τ σ && conv (apply c x (VSym x)) (apply d y (VSym y))
+  (VLam x c, VLam y d) ->
+    conv (apply c x (VSym x)) (apply d y (VSym y))
+  (VApp e₁ e₂, VApp e₃ e₄) ->
+    conv e₁ e₃ && conv e₂ e₄
+  (VSym x, VSym y) -> x == y
+  (VCon x, VCon y) -> x == y
+  (VLit x, VLit y) -> x == y
+  (VU, VU) -> True
+  _ -> False
