@@ -5,18 +5,19 @@ import Control.Comonad.Cofree (Cofree ((:<)))
 import Control.Monad (unless)
 import Control.Monad.Except (Except, throwError)
 import Control.Monad.Reader (ReaderT, asks, local)
-import Data.Foldable (traverse_)
+import Data.Foldable (for_)
 import Data.Map (fromList, insert, lookup, singleton)
-import Data.Text (unpack)
-import Prettyprinter (pretty)
+import Data.Text (Text)
+import Error.Diagnose (Marker (This), Report, err)
 import Prelude hiding (lookup)
 
 import Infer.Eval (apply, conv, eval)
 import Infer.Quote (quote)
 import Infer.Value (Env, Val (..))
 import Parse.Parse (Span)
-import Parse.Pretty ()
+import Parse.Pretty (render)
 import Syntax
+import Util (fromSpan)
 
 data Ctx = Ctx {types :: Env, values :: Env}
 
@@ -31,13 +32,18 @@ def :: Sym -> Val -> Val -> Infer a -> Infer a
 def x τ v = local \c ->
   c{types = insert x τ (types c), values = insert x v (values c)}
 
-type Infer = ReaderT Ctx (Except String)
+type Infer = ReaderT Ctx (Except (Report Text))
 
-same :: Val -> Val -> Infer ()
-same τ π =
+typeError :: Text -> Span -> Text -> Infer a
+typeError msg sp this = throwError $ err Nothing msg [(fromSpan sp, This this)] []
+
+same :: Span -> Val -> Val -> Infer ()
+same sp τ π =
   unless (conv τ π) $
-    throwError $
-      "Expected " <> show (pretty (quote τ)) <> ", found " <> show (pretty (quote π))
+    typeError
+      ("Expected type " <> render (quote τ))
+      sp
+      ("Has type " <> render (quote π))
 
 -- | Evaluate a term using the environment within the monad.
 evalM :: ATm Span -> Infer Val
@@ -54,42 +60,43 @@ check (sp :< tm) τ = case (tm, τ) of
   (LetF bs e, _) -> let' bs (check e τ)
   _ -> do
     π <- infer (sp :< tm)
-    same τ π
+    same sp τ π
 
 -- | Bidirectional type inference.
 infer :: ATm Span -> Infer Val
-infer (_ :< tm) = case tm of
+infer (sp :< tm) = case tm of
   -- Π checks that σ is a type, then π is a type under x:σ
   PiF x σ π -> do
     σ' <- ensure σ VU
     bind x σ' (check π VU)
     pure VU
   -- λ cannot be inferred, only checked
-  LamF _ _ -> throwError "Cannot infer lambda type, try annotating"
+  LamF _ _ -> typeError "Cannot infer type of lambda" sp ""
   -- Application checks that lhs is Π, then checks rhs against the domain
   AppF e₁ e₂ ->
     infer e₁ >>= \case
       VPi x τ c -> do
         check e₂ τ
         apply c x <$> evalM e₂
-      _ -> throwError "Not a function"
+      τ -> typeError "Cannot call non-function" sp ("Has type " <> render (quote τ))
   -- Let checks the bindings, then infers the body
   LetF bs e -> let' bs (infer e)
   CaseF e ps -> do
     σ <- infer e
-    σs <- sequence [pat p σ >>= (`binds` infer v) | (p, v) <- ps]
+    vs <- sequence [(v,) <$> (pat p σ >>= (`binds` infer v)) | (p, v) <- ps]
     -- TODO: improve this error message, and fixup this code
-    uncurry same `traverse_` zip σs (tail σs)
-    pure (head σs)
+    for_ (zip vs (tail vs)) \((_, τ), (sp' :< _, π)) -> same sp' τ π
+    pure (snd (head vs))
   -- Symbols are looked up in the environment
   SymF x ->
     asks (lookup x . types) >>= \case
       Just v -> pure v
-      Nothing -> throwError ("Unbound symbol " <> unpack x)
+      -- TODO: add 'check' case when type is known
+      Nothing -> typeError "Unbound symbol" sp ""
   ConF c ->
     asks (lookup c . types) >>= \case
       Just v -> pure v
-      Nothing -> throwError ("Unbound symbol " <> unpack c)
+      Nothing -> typeError "Unbound constructor" sp ""
   -- Literals are of type Int
   LitF _ -> pure (VCon "Int")
   -- U is a type
@@ -117,9 +124,13 @@ pat = curry \case
   (_ :< (BindF x), σ) -> pure (singleton x σ)
   (_ :< (IsLitF _), VCon "Int") -> pure mempty
   (_ :< WildF, _) -> pure mempty
-  (_, τ) -> throwError $ "Expected " <> show (pretty (quote τ))
+  -- TODO: add inferred type to error
+  (sp :< _, τ) -> typeError ("Expected " <> render (quote τ)) sp ""
  where
+  -- TODO: does this... work? I think it needs to examine in-scope
+  -- constructors instead.
   go x = curry \case
     ([], VCon y) | x == y -> pure mempty
     (p : ps, VApp τ π) -> liftA2 (<>) (go x ps τ) (pat p π)
-    (_, τ) -> throwError $ "Expected " <> show (pretty (quote τ))
+    -- TODO: figure out the error cases here
+    _ -> error "Unimplemented"

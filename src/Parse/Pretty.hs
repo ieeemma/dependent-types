@@ -2,7 +2,9 @@ module Parse.Pretty where
 
 import Control.Applicative (liftA2)
 import Data.Functor.Foldable (para)
-import Prettyprinter (Doc, Pretty (..), hsep, indent, line, vsep, (<+>))
+import Data.Text (Text)
+import Prettyprinter (Doc, Pretty (..), defaultLayoutOptions, hsep, indent, layoutPretty, line, vsep, (<+>))
+import Prettyprinter.Render.Text (renderStrict)
 
 import Syntax
 
@@ -60,3 +62,7 @@ paren p (e, x) = if not (p e) then "(" <> x <> ")" else x
 -- | Line-separate and indent a list of `Doc`s.
 block :: [Doc ann] -> Doc ann
 block xs = "{" <> line <> vsep [indent 2 x <> ";" | x <- xs] <> "}"
+
+-- | Render a `Pretty a` to text.
+render :: (Pretty a) => a -> Text
+render = renderStrict . layoutPretty defaultLayoutOptions . pretty
