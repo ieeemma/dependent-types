@@ -7,6 +7,7 @@ import Control.Monad.Except (Except, throwError)
 import Control.Monad.Reader (ReaderT, asks, local)
 import Data.Foldable (traverse_)
 import Data.Map (fromList, insert, lookup, singleton)
+import Data.Text (unpack)
 import Prettyprinter (pretty)
 import Prelude hiding (lookup)
 
@@ -33,10 +34,10 @@ def x τ v = local \c ->
 type Infer = ReaderT Ctx (Except String)
 
 same :: Val -> Val -> Infer ()
-same v₁ v₂ =
-  unless (conv v₁ v₂) $
+same τ π =
+  unless (conv τ π) $
     throwError $
-      "Expected " <> show (pretty (quote v₁)) <> ", found " <> show (pretty (quote v₂))
+      "Expected " <> show (pretty (quote τ)) <> ", found " <> show (pretty (quote π))
 
 -- | Evaluate a term using the environment within the monad.
 evalM :: ATm Span -> Infer Val
@@ -53,7 +54,7 @@ check (sp :< tm) τ = case (tm, τ) of
   (LetF bs e, _) -> let' bs (check e τ)
   _ -> do
     π <- infer (sp :< tm)
-    same π τ
+    same τ π
 
 -- | Bidirectional type inference.
 infer :: ATm Span -> Infer Val
@@ -84,11 +85,11 @@ infer (_ :< tm) = case tm of
   SymF x ->
     asks (lookup x . types) >>= \case
       Just v -> pure v
-      Nothing -> throwError "Unbound symbol"
+      Nothing -> throwError ("Unbound symbol " <> unpack x)
   ConF c ->
     asks (lookup c . types) >>= \case
       Just v -> pure v
-      Nothing -> throwError "Unbound symbol"
+      Nothing -> throwError ("Unbound symbol " <> unpack c)
   -- Literals are of type Int
   LitF _ -> pure (VCon "Int")
   -- U is a type
