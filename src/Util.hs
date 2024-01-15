@@ -1,9 +1,15 @@
+{-# LANGUAGE RecordWildCards #-}
+
 -- | Utility functions not provided by the standard libraries.
 module Util where
 
 import Control.Arrow ((>>>))
 import Control.Monad ((>=>))
 import Data.Functor.Foldable (Base, Recursive, cata, para)
+import Error.Diagnose (Position (..))
+import Text.Megaparsec (SourcePos (..), unPos)
+
+import Parse.Parse (Span (..))
 
 {- | Recursion schemes doesn't provide adequate combinators for monadic folds.
 This helper (aptly named `magic` as it seems entirely useless in isolation) lifts
@@ -23,3 +29,9 @@ pull out the monadic action from the recursive call.
 -}
 paraM :: (Recursive t, Traversable (Base t), Monad m) => (Base t (t, a) -> m a) -> t -> m a
 paraM = magic para \(x, y) -> (x,) <$> y
+
+-- | Convert a `Span` to a diagnose `Position`
+fromSpan :: Span -> Position
+fromSpan (Span p₁ p₂) = Position (f p₁) (f p₂) (sourceName p₁)
+ where
+  f SourcePos{..} = (unPos sourceLine, unPos sourceColumn)
