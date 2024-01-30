@@ -11,6 +11,7 @@ module Infer.Value where
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.Map (Map)
 
+import Parse.Parse (Span)
 import Syntax
 
 -- TODO: De-Bruijn indices for better performance.
@@ -32,7 +33,7 @@ This captures the scope of a function.
 For example, in `λx -> fx`, the closure captures the value of `f` as
 it is free.
 -}
-data Clos = forall a. Clos Env (ATm a)
+data Clos = Clos Env (ATm Span)
 
 -- | Environments map symbols to values.
 type Env = Map Sym Val

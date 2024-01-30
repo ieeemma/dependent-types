@@ -21,9 +21,10 @@ import Data.Map (fromList, insert, singleton, union, (!))
 import Data.Maybe (mapMaybe)
 
 import Infer.Value
+import Parse.Parse (Span)
 import Syntax
 
-eval :: Env -> ATm a -> Val
+eval :: Env -> ATm Span -> Val
 eval env = para (tailF >>> f)
  where
   f = \case

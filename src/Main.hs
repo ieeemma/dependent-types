@@ -7,7 +7,7 @@ import Data.Text.IO qualified as TIO
 import Error.Diagnose (addFile, addReport, def, defaultStyle, printDiagnostic, stderr)
 import Text.Megaparsec (errorBundlePretty, parse)
 
-import Infer.Infer (Ctx (..), infer)
+import Infer.Infer (Ctx (..), Ty (..), infer)
 import Infer.Quote (quote)
 import Infer.Value
 import Parse.Parse (file)
@@ -24,4 +24,4 @@ main = do
     Left e -> putStrLn (errorBundlePretty e)
     Right t -> case runExcept (runReaderT (infer t) (Ctx tys mempty)) of
       Left e -> printDiagnostic stderr True True 4 defaultStyle (addReport (addFile def name (unpack src)) e)
-      Right v -> print (quote v)
+      Right (Ty _ v) -> print (quote v)
