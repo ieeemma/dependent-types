@@ -71,13 +71,13 @@ int :: Parser Int
 int = lexeme $ try $ L.signed (pure ()) L.decimal
 
 -- | Parse a file.
-file :: Parser (ATm Span)
+file :: Parser (Tm :@ Span)
 file = do
   bs <- ws *> bind `sepEndBy` symbol ";" <* eof
   pure (error "TODO" :< LetF bs (error "TODO" :< SymF "main"))
 
 -- | Parse a whole term with operator precedence.
-term :: Parser (ATm Span)
+term :: Parser (Tm :@ Span)
 term =
   -- TODO: custom operator precedence for terms and patterns.
   makeExprParser grouping [[InfixL (pure app)], [InfixR (arr <$ symbol "->")]]
@@ -97,8 +97,8 @@ term =
 
   -- Parse an atomic term.
   atom =
-    spanned $
-      choice
+    spanned
+      $ choice
         [ LamF
             <$> (symbol "λ" *> lower)
             <*> (symbol "->" *> term)
@@ -117,7 +117,7 @@ term =
   alt = (,) <$> pat <*> (symbol "->" *> term)
 
 -- | Parse a toplevel definition.
-bind :: Parser (Bind (ATm Span))
+bind :: Parser (Bind (Tm :@ Span))
 bind =
   choice
     [ Data <$> (symbol "data" *> upper) <*> (symbol ":" *> term) <*> block con
@@ -127,13 +127,13 @@ bind =
   con = (,) <$> upper <*> (symbol ":" *> term)
 
 -- | Parse a pattern.
-pat :: Parser (APat Span)
+pat :: Parser (Pat :@ Span)
 pat = paren <|> atom
  where
   paren = between (symbol "(") (symbol ")") pat
   atom =
-    spanned $
-      choice
+    spanned
+      $ choice
         [ DestructF
             <$> upper
             <*> many pat

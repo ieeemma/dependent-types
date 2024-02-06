@@ -7,10 +7,10 @@ import Syntax
 -- TODO: figure out how to generalize this to a typeclass.
 -- TODO: this is so verbose, there must be a better way.
 
-deannotateTm :: ATm a -> Tm Pat
+deannotateTm :: Tm :@ a -> Tm Pat
 deannotateTm = cata f
  where
-  f :: CofreeF (TmF (APat a)) a (Tm Pat) -> Tm Pat
+  f :: CofreeF (TmF (Pat :@ a)) a (Tm Pat) -> Tm Pat
   f (_ :< t) = case t of
     PiF x σ π -> Pi x σ π
     LamF x e -> Lam x e
@@ -22,7 +22,7 @@ deannotateTm = cata f
     LitF n -> Lit n
     UF -> U
 
-deannotatePat :: APat a -> Pat
+deannotatePat :: Pat :@ a -> Pat
 deannotatePat = cata f
  where
   f :: CofreeF PatF a Pat -> Pat
