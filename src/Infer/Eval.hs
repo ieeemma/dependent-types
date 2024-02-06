@@ -23,7 +23,7 @@ import Data.Maybe (mapMaybe)
 import Infer.Value
 import Syntax
 
-eval :: Env -> ATm a -> Val
+eval :: Env -> Tm :@ a -> Val
 eval env = para (tailF >>> f)
  where
   f = \case
@@ -67,7 +67,7 @@ apply (Clos env e) x v = eval (insert x v env) e
 {- | Try to match a value against a pattern, producing the bound values.
 Destructuring is recursive, so `F x y` matches `(F 5) 10`, producing `{x: 5, y: 10}`.
 -}
-match :: APat a -> Val -> Maybe Env
+match :: Pat :@ a -> Val -> Maybe Env
 match = curry \case
   (_ :< (DestructF x ps), v) -> go x (reverse ps) v
   (_ :< (BindF x), v) -> Just (singleton x v)

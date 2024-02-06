@@ -58,10 +58,15 @@ data Tm p
 
 makeBaseFunctor ''Tm
 
--- Aliases for annotations
+-- Type family for 'passing through' an annotation.
+
+type family (a :: k) :@ b
+
+type instance Pat :@ a = Cofree PatF a
+type instance Tm :@ a = Cofree (TmF (Pat :@ a)) a
 
 deriving instance Generic Pat
 deriving instance Generic (Tm a)
 
-type APat a = Cofree PatF a
-type ATm a = Cofree (TmF (APat a)) a
+-- type APat a = Cofree PatF a
+-- type ATm a = Cofree (TmF (APat a)) a

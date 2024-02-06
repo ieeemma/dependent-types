@@ -39,22 +39,22 @@ typeError msg sp this = throwError $ err Nothing msg [(fromSpan sp, This this)] 
 
 same :: Span -> Val -> Val -> Infer ()
 same sp τ π =
-  unless (conv τ π) $
-    typeError
+  unless (conv τ π)
+    $ typeError
       ("Expected type " <> render (quote τ))
       sp
       ("Has type " <> render (quote π))
 
 -- | Evaluate a term using the environment within the monad.
-evalM :: ATm Span -> Infer Val
+evalM :: Tm :@ Span -> Infer Val
 evalM t = asks ((`eval` t) . values)
 
 -- | Check that a term has a given type, then evaluate it.
-ensure :: ATm Span -> Val -> Infer Val
+ensure :: Tm :@ Span -> Val -> Infer Val
 ensure t τ = check t τ *> evalM t
 
 -- | Bidirectional type checking.
-check :: ATm Span -> Val -> Infer ()
+check :: Tm :@ Span -> Val -> Infer ()
 check (sp :< tm) τ = case (tm, τ) of
   (LamF x e, VPi y σ c) -> bind x σ (check e $ apply c y (VSym x))
   (LetF bs e, _) -> let' bs (check e τ)
@@ -63,7 +63,7 @@ check (sp :< tm) τ = case (tm, τ) of
     same sp τ π
 
 -- | Bidirectional type inference.
-infer :: ATm Span -> Infer Val
+infer :: Tm :@ Span -> Infer Val
 infer (sp :< tm) = case tm of
   -- Π checks that σ is a type, then π is a type under x:σ
   PiF x σ π -> do
@@ -103,7 +103,7 @@ infer (sp :< tm) = case tm of
   UF -> pure VU
 
 -- | Check the bindings of a let expression.
-let' :: [Bind (ATm Span)] -> Infer a -> Infer a
+let' :: [Bind (Tm :@ Span)] -> Infer a -> Infer a
 let' [] m = m
 let' (Def x σ e : bs) m = do
   σᵥ <- ensure σ VU
@@ -118,7 +118,7 @@ let' (Data x σ cs : bs) m = do
     binds cs' (let' bs m)
 
 -- | Check that a pattern has a type, and return its binds.
-pat :: APat Span -> Val -> Infer Env
+pat :: Pat :@ Span -> Val -> Infer Env
 pat = curry \case
   (_ :< (DestructF x ps), σ) -> go x (reverse ps) σ
   (_ :< (BindF x), σ) -> pure (singleton x σ)
