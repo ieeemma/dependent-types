@@ -13,9 +13,9 @@ module Infer.Eval where
 
 import Control.Applicative (liftA2)
 import Control.Arrow ((>>>))
-import Control.Comonad.Cofree (Cofree ((:<)))
-import Control.Comonad.Trans.Cofree (tailF)
-import Data.Bifunctor (second)
+import Control.Comonad.Cofree (Cofree ((:<)), unwrap)
+import Control.Comonad.Trans.Cofree qualified as CF
+import Data.Bifunctor (bimap, first, second)
 import Data.Functor.Foldable (para)
 import Data.Map (fromList, insert, singleton, union, (!))
 import Data.Maybe (mapMaybe)
@@ -23,17 +23,20 @@ import Data.Maybe (mapMaybe)
 import Infer.Value
 import Syntax
 
-eval :: Env -> Tm :@ a -> Val
-eval env = para (tailF >>> f)
+{- | Evaluate a term under an environment, producing a value annotated
+with annotations it originates from in the term.
+-}
+eval :: Env a -> Tm :@ a -> Val :@ a
+eval env = para f
  where
-  f = \case
+  f (a CF.:< tm) = case tm of
     -- Π and λ construct closures with their environment and body
-    PiF x (_, v) (t, _) -> VPi x v (Clos env t)
-    LamF x (t, _) -> VLam x (Clos env t)
+    PiF x (_, v) (t, _) -> val (VPiF x v (Clos env t))
+    LamF x (t, _) -> val (VLamF x (Clos env t))
     -- Application to a lambda reduces
-    AppF (_, VLam x c) (_, v) -> apply c x v
+    AppF (_, _ :< VLamF x c) (_, v) -> val (unwrap (apply c x v))
     -- Application to anything else is neutral
-    AppF (_, v₁) (_, v₂) -> VApp v₁ v₂
+    AppF (_, v₁) (_, v₂) -> val (VAppF v₁ v₂)
     -- Let is a local binding
     LetF bs (t, _) -> eval (binds bs `union` env) t
     -- Case tries to match the scrutinee against each pattern
@@ -43,10 +46,12 @@ eval env = para (tailF >>> f)
     -- Constructors, unintuitively, self-evaluate
     -- This is because `Just 5` is represented as `VApp (VCon "Just") (VLit 5)`
     -- TODO: is this the right thing to do?
-    ConF n -> VCon n
+    ConF n -> val (VConF n)
     -- Literals self-evaluate
-    LitF n -> VLit n
-    UF -> VU
+    LitF n -> val (VLitF n)
+    UF -> val VUF
+   where
+    val = (a :<)
 
   -- TODO: Okay, this is just wrong.
   -- I think the environment needs to store constructors too.
@@ -61,36 +66,40 @@ eval env = para (tailF >>> f)
     Just e' -> eval (e' `union` env) t
 
 -- | Evaluate a closusure with a symbol and value.
-apply :: Clos -> Sym -> Val -> Val
+apply :: Clos a -> Sym -> Val :@ a -> Val :@ a
 apply (Clos env e) x v = eval (insert x v env) e
 
 {- | Try to match a value against a pattern, producing the bound values.
 Destructuring is recursive, so `F x y` matches `(F 5) 10`, producing `{x: 5, y: 10}`.
 -}
-match :: Pat :@ a -> Val -> Maybe Env
-match = curry \case
-  (_ :< (DestructF x ps), v) -> go x (reverse ps) v
-  (_ :< (BindF x), v) -> Just (singleton x v)
-  (_ :< (IsLitF n), VLit m) | n == m -> Just mempty
-  (_ :< WildF, _) -> Just mempty
-  _ -> Nothing
+match :: Pat :@ a -> Val :@ a -> Maybe (Env a)
+match =
+  curry $ first unwrap >>> \case
+    (DestructF x ps, v) -> go x (reverse ps) v
+    (BindF x, v) -> Just (singleton x v)
+    (IsLitF n, _ :< (VLitF m)) | n == m -> Just mempty
+    (WildF, _) -> Just mempty
+    _ -> Nothing
  where
   go x = curry \case
-    ([], VCon y) | x == y -> Just mempty
-    (p : ps, VApp v₁ v₂) -> liftA2 union (go x ps v₁) (match p v₂)
+    ([], _ :< VConF y) | x == y -> Just mempty
+    (p : ps, _ :< VAppF v₁ v₂) -> liftA2 union (go x ps v₁) (match p v₂)
     _ -> Nothing
 
 -- | Beta-eta equality. Both values must have the same type!
-conv :: Val -> Val -> Bool
-conv = curry \case
-  (VPi x τ c, VPi y σ d) ->
-    conv τ σ && conv (apply c x (VSym x)) (apply d y (VSym y))
-  (VLam x c, VLam y d) ->
-    conv (apply c x (VSym x)) (apply d y (VSym y))
-  (VApp e₁ e₂, VApp e₃ e₄) ->
-    conv e₁ e₃ && conv e₂ e₄
-  (VSym x, VSym y) -> x == y
-  (VCon x, VCon y) -> x == y
-  (VLit x, VLit y) -> x == y
-  (VU, VU) -> True
-  _ -> False
+conv :: Val :@ a -> Val :@ a -> Bool
+conv =
+  curry $ bimap unwrap unwrap >>> \case
+    (VPiF x τ c, VPiF y π d) ->
+      conv τ π && conv (apply c x (sym x)) (apply d y (sym y))
+    (VLamF x c, VLamF y d) ->
+      conv (apply c x (sym x)) (apply d y (sym y))
+    (VAppF e₁ e₂, VAppF e₃ e₄) ->
+      conv e₁ e₃ && conv e₂ e₄
+    (VSymF x, VSymF y) -> x == y
+    (VConF x, VConF y) -> x == y
+    (VLitF x, VLitF y) -> x == y
+    (VUF, VUF) -> True
+    _ -> False
+ where
+  sym x = error "oops!" :< VSymF x
