@@ -10,10 +10,10 @@ import Text.Megaparsec (errorBundlePretty, parse)
 import Infer.Infer (Ctx (..), infer)
 import Infer.Quote (quote)
 import Infer.Value
-import Parse.Parse (file)
+import Parse.Parse (Span, file)
 import Parse.Pretty ()
 
-tys :: Env
+tys :: Env Span
 tys = mempty
 
 main :: IO ()
