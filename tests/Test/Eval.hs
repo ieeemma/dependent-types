@@ -1,13 +1,13 @@
 module Test.Eval where
 
-import Infer.Eval (eval)
-import Infer.Quote (quote)
-import Test.Parse (parseFrom)
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.HUnit (Assertion, testCase, (@?=))
 
 import Deannotate (deannotateTm)
+import Infer.Eval (eval)
+import Infer.Quote (quote)
 import Parse.Parse (term)
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.HUnit (Assertion, testCase, (@=?))
+import Test.Parse (parseFrom)
 
 evalTests :: TestTree
 evalTests =
@@ -19,7 +19,7 @@ evalsTo :: String -> String -> Assertion
 evalsTo x v =
   let x' = parseFrom term x
       v' = parseFrom term v
-   in quote (eval mempty x') @=? deannotateTm v'
+   in quote (eval mempty x') @?= deannotateTm v'
 
 cases :: [(String, String, String)]
 cases =

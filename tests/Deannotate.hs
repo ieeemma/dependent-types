@@ -1,17 +1,17 @@
 module Deannotate where
 
-import Control.Comonad.Trans.Cofree (CofreeF (..))
-import Data.Functor.Foldable (cata)
+import Control.Arrow ((>>>))
+import Control.Comonad.Trans.Cofree (tailF)
+import Data.Functor.Foldable (Corecursive (embed), cata)
+import Infer.Value
 import Syntax
 
 -- TODO: figure out how to generalize this to a typeclass.
 -- TODO: this is so verbose, there must be a better way.
 
 deannotateTm :: Tm :@ a -> Tm Pat
-deannotateTm = cata f
- where
-  f :: CofreeF (TmF (Pat :@ a)) a (Tm Pat) -> Tm Pat
-  f (_ :< t) = case t of
+deannotateTm =
+  cata $ tailF >>> \case
     PiF x σ π -> Pi x σ π
     LamF x e -> Lam x e
     AppF e₁ e₂ -> App e₁ e₂
@@ -23,11 +23,7 @@ deannotateTm = cata f
     UF -> U
 
 deannotatePat :: Pat :@ a -> Pat
-deannotatePat = cata f
- where
-  f :: CofreeF PatF a Pat -> Pat
-  f (_ :< p) = case p of
-    DestructF x ps -> Destruct x ps
-    BindF x -> Bind x
-    IsLitF n -> IsLit n
-    WildF -> Wild
+deannotatePat = cata $ tailF >>> embed
+
+deannotateVal :: Val :@ a -> Val (Clos a)
+deannotateVal = cata $ tailF >>> embed
