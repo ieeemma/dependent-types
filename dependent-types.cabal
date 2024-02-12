@@ -37,7 +37,7 @@ test-suite tests
     type:               exitcode-stdio-1.0
     main-is:            Main.hs
     other-modules:      Arbitrary, Deannotate,
-                        Test.Parse, Test.Eval
+                        Test.Parse, Test.Eval, Test.Infer
     hs-source-dirs:     tests, src
     build-depends:      tasty ^>=1.5,
                         tasty-quickcheck,
