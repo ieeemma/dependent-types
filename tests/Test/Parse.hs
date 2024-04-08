@@ -19,10 +19,13 @@ import Deannotate (deannotatePat, deannotateTm)
 import Parse.Parse (Parser, pat, term)
 import Parse.Pretty ()
 
-parseFrom :: Parser a -> Text -> a
-parseFrom p x = case parse (p <* eof) "<test>" x of
+parseFrom :: Parser a -> FilePath -> Text -> a
+parseFrom p path x = case parse (p <* eof) path x of
   Left e -> error (errorBundlePretty e)
   Right y -> y
+
+parseFrom' :: Parser a -> Text -> a
+parseFrom' = flip parseFrom "<test>"
 
 parseTests :: TestTree
 parseTests =
@@ -32,8 +35,8 @@ parseTests =
     , testProperty "Terms" testTerm
     ]
  where
-  testPattern p = deannotatePat (parseFrom pat (prettyText p)) === p
-  testTerm t = deannotateTm (parseFrom term (prettyText t)) === t
+  testPattern p = deannotatePat (parseFrom' pat (prettyText p)) === p
+  testTerm t = deannotateTm (parseFrom' term (prettyText t)) === t
 
 prettyText :: (Pretty a) => a -> Text
 prettyText = pretty >>> layoutPretty defaultLayoutOptions >>> renderStrict

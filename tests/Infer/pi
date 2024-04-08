@@ -1,0 +1,3 @@
+data X : Type -> Type {} ;
+
+main : Type = (x: Type) -> X x ;
