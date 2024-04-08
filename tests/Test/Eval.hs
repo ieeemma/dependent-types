@@ -3,6 +3,7 @@ module Test.Eval where
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase, (@?=))
 
+import Data.Text (Text)
 import Deannotate (deannotateTm)
 import Infer.Eval (eval)
 import Infer.Quote (quote)
@@ -15,13 +16,13 @@ evalTests =
     "Eval"
     [testCase n (x `evalsTo` v) | (n, x, v) <- cases]
 
-evalsTo :: String -> String -> Assertion
+evalsTo :: Text -> Text -> Assertion
 evalsTo x v =
   let x' = parseFrom term x
       v' = parseFrom term v
    in quote (eval mempty x') @?= deannotateTm v'
 
-cases :: [(String, String, String)]
+cases :: [(String, Text, Text)]
 cases =
   [ -- Self-eval tests
     ("lit", "3", "3")

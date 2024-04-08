@@ -6,8 +6,10 @@ This allows both to be automatically tested against infinite random inputs.
 -}
 module Test.Parse where
 
-import Data.Text qualified as T
-import Prettyprinter (pretty)
+import Control.Arrow ((>>>))
+import Data.Text (Text)
+import Prettyprinter (Pretty, defaultLayoutOptions, layoutPretty, pretty)
+import Prettyprinter.Render.Text (renderStrict)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (testProperty, (===))
 import Text.Megaparsec (eof, errorBundlePretty, parse)
@@ -17,8 +19,8 @@ import Deannotate (deannotatePat, deannotateTm)
 import Parse.Parse (Parser, pat, term)
 import Parse.Pretty ()
 
-parseFrom :: Parser a -> String -> a
-parseFrom p x = case parse (p <* eof) "<test>" (T.pack x) of
+parseFrom :: Parser a -> Text -> a
+parseFrom p x = case parse (p <* eof) "<test>" x of
   Left e -> error (errorBundlePretty e)
   Right y -> y
 
@@ -30,5 +32,8 @@ parseTests =
     , testProperty "Terms" testTerm
     ]
  where
-  testPattern p = deannotatePat (parseFrom pat (show (pretty p))) === p
-  testTerm t = deannotateTm (parseFrom term (show (pretty t))) === t
+  testPattern p = deannotatePat (parseFrom pat (prettyText p)) === p
+  testTerm t = deannotateTm (parseFrom term (prettyText t)) === t
+
+prettyText :: (Pretty a) => a -> Text
+prettyText = pretty >>> layoutPretty defaultLayoutOptions >>> renderStrict
