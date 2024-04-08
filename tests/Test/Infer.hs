@@ -1,42 +1,55 @@
-{-# LANGUAGE PatternSynonyms #-}
-
 module Test.Infer where
 
+import Control.Arrow ((>>>))
 import Control.Monad.Except (runExcept)
-import Control.Monad.Reader (ReaderT (runReaderT))
+import Control.Monad.Reader (runReaderT)
+import Data.Bifunctor (first)
+import Data.Map (Map, alterF, fromList, toList)
+import Data.Maybe (fromJust)
+import Data.Text (Text, unpack)
+import Data.Text.IO qualified as TIO
+import Data.Traversable (for)
+import Error.Diagnose (Report, addFile, addReport, def, prettyDiagnostic)
+import Prettyprinter (Pretty)
+import System.Directory (listDirectory)
+import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.HUnit (testCase, (@?=))
+import Test.Tasty.HUnit (Assertion, assertFailure, testCase)
 
-import Deannotate (deannotateTm)
 import Infer.Infer (Ctx (..), infer)
-import Infer.Quote (quote)
-import Parse.Parse (term)
-import Syntax
+import Parse.Parse (file)
 import Test.Parse (parseFrom)
 
-inferTests :: TestTree
-inferTests =
-  testGroup
-    "Infer"
-    [testCase n (typeof τ @?= deannotateTm (parseFrom term v)) | (n, τ, v) <- cases]
+inferTests :: IO TestTree
+inferTests = do
+  -- Get all files and their contents in the Infer directory
+  -- then pop the common file from the map.
+  (common, fs') <- pop "common" <$> files "tests/Infer"
+  pure
+    $ testGroup
+      "Infer"
+      [testCase p $ run p (common <> x) | (p, x) <- toList fs']
 
-typeof :: String -> Tm Pat
-typeof x =
-  let τ = infer (parseFrom term x)
-      r = runExcept (runReaderT τ (Ctx mempty mempty))
-   in case r of
-        Right x -> quote x
-        -- TODO: Until the `diagnose` library unpins its `text` dependency,
-        -- the `Report` type is inaccessible, so can't be tested
-        Left _ -> error "oops"
+files :: FilePath -> IO (Map FilePath Text)
+files path = do
+  fs <- listDirectory path
+  xs <- for fs ((path </>) >>> TIO.readFile)
+  pure $ fromList (zip fs xs)
 
-cases :: [(String, String, String)]
-cases =
-  [ -- Literals
-    ("lit", "3", "Int")
-  , ("u", "Type", "Type")
-  , -- Π
-    ("Π", "(x: Type) -> Maybe x", "Type")
-  , -- app
-    ("app", "Just 5", "Maybe Int")
-  ]
+pop :: (Ord k) => k -> Map k v -> (v, Map k v)
+pop k = alterF (,Nothing) k >>> first fromJust
+
+run :: FilePath -> Text -> Assertion
+run path src = case runExcept (runReaderT (infer tm) ctx) of
+  Right _ -> pure ()
+  Left e -> assertFailure (prettyError path src e)
+ where
+  tm = parseFrom file path src
+  ctx = Ctx mempty mempty
+
+-- prettyError :: FilePath -> Text -> String
+prettyError :: (Pretty a) => FilePath -> Text -> Report a -> String
+prettyError path src =
+  addReport (addFile def path (unpack src))
+    >>> prettyDiagnostic True 4
+    >>> show

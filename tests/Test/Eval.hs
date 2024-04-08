@@ -8,7 +8,7 @@ import Deannotate (deannotateTm)
 import Infer.Eval (eval)
 import Infer.Quote (quote)
 import Parse.Parse (term)
-import Test.Parse (parseFrom)
+import Test.Parse (parseFrom')
 
 evalTests :: TestTree
 evalTests =
@@ -18,8 +18,8 @@ evalTests =
 
 evalsTo :: Text -> Text -> Assertion
 evalsTo x v =
-  let x' = parseFrom term x
-      v' = parseFrom term v
+  let x' = parseFrom' term x
+      v' = parseFrom' term v
    in quote (eval mempty x') @?= deannotateTm v'
 
 cases :: [(String, Text, Text)]

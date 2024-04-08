@@ -7,4 +7,6 @@ import Test.Infer (inferTests)
 import Test.Parse (parseTests)
 
 main :: IO ()
-main = defaultMain $ testGroup "Tests" [parseTests, evalTests, inferTests]
+main = do
+  i <- inferTests
+  defaultMain $ testGroup "Tests" [parseTests, evalTests, i]
