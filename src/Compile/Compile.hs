@@ -2,8 +2,8 @@ module Compile.Compile where
 
 import Control.Arrow ((>>>))
 import Control.Comonad.Trans.Cofree (tailF, unwrap)
-import Data.Functor ((<&>))
-import Data.Functor.Foldable (cata)
+import Data.Bifunctor (second)
+import Data.Functor.Foldable (para)
 import Data.List (intersperse)
 import Data.Text (Text)
 import Data.Text.Lazy (toStrict)
@@ -18,31 +18,32 @@ compile = compileTerm >>> toLazyText >>> toStrict
 
 compileTerm :: Tm :@ a -> Builder
 compileTerm =
-  cata $ tailF >>> \case
-    LamF x e -> parens ["lambda", parens [fromText x], e]
-    AppF e₁ e₂ -> parens [e₁, e₂]
-    LetF bs e -> compileLet bs e
-    CaseF e cs -> compileCase e cs
+  para $ tailF >>> \case
+    LamF x (_, e) -> parens ["lambda", parens [fromText x], e]
+    AppF (_, e₁) (_, e₂) -> parens [e₁, e₂]
+    LetF bs (_, e) -> compileLet bs e
+    CaseF (_, e) cs -> compileCase e (second snd <$> cs)
     SymF x -> fromText x
     ConF x -> fromText x
     LitF n -> decimal n
     _ -> error "Impossible!"
 
-compileLet :: [Bind Builder] -> Builder -> Builder
+compileLet :: [Bind (Tm :@ a, Builder)] -> Builder -> Builder
 compileLet bs e = parens ["letrec", parens (concatMap compileBind bs), e]
 
-compileBind :: Bind Builder -> [Builder]
+compileBind :: Bind (Tm :@ a, Builder) -> [Builder]
 compileBind = \case
-  Def x _ e -> [parens [fromText x, e]]
-  Data x _ cs -> h : t
+  Def x _ (_, e) -> [parens [fromText x, e]]
+  Data x _ cs -> parens [fromText x, "null"] : fmap f cs
    where
-    h = parens [fromText x, "null"]
-    t =
-      cs <&> \(y, _) ->
-        parens
-          [ fromText y
-          , parens ["lambda", "$xs", parens ["cons", parens ["quote", fromText y], "$xs"]]
-          ]
+    f (y, (σ, _)) = parens [fromText y, g y 0 σ]
+
+    g y n =
+      unwrap >>> \case
+        PiF _ _ e -> parens ["lambda", parens [v n], g y (n + 1) e]
+        _ -> parens $ ["list", parens ["quote", fromText y]] <> (v <$> [0 .. n - 1])
+
+    v n = "$" <> decimal n
 
 compileCase :: Builder -> [(Pat :@ a, Builder)] -> Builder
 compileCase e cs = parens (h <> t)
