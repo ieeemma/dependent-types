@@ -10,22 +10,19 @@ Features marked with `*` are not required for the core language but may be imple
   - [x] AST powered by [recursion-schemes](https://hackage.haskell.org/package/recursion-schemes)
   - [x] Expressions
   - [x] Toplevels
-  - [ ] ~~Whitespace sensitive parsing similar to Haskell~~ Temporarily removed
-  - [ ] Custom infix operators
+  - [ ] \* Custom infix operators
   - [ ] \* Anyfix operator parsing similar to Agda
 - Static analysis
-  - [ ] Dependent typing
+  - [x] Dependent typing
     - [x] Evaluation
-    - [ ] Normalization
+    - [x] Normalization
     - [ ] \* Unification for holes
     - [ ] \* Implicit arguments
-  - [ ] Name resolution
   - [ ] \* Type classes
   - [ ] \* Totality checking similar to Idris
 - Compiler
-  - [ ] LLVM backend
-  - [ ] Runtime + garbage collection
-  - [ ] \* SSA optimization
+  - [x] Scheme backend
+  - [ ] \* Optimization
 - Language support
   - [ ] Prelude of useful types
   - [ ] Documentation for prelude
@@ -33,8 +30,7 @@ Features marked with `*` are not required for the core language but may be imple
   - [ ] \* CFFI
 - Tooling
   - [ ] CLI
-  - [ ] Pretty errors powered by [diagnose](https://hackage.haskell.org/package/diagnose)
-  - [ ] \* Formatter powered by [prettyprinter](https://hackage.haskell.org/package/prettyprinter)
+  - [x] Pretty errors powered by [diagnose](https://hackage.haskell.org/package/diagnose)
 
 ## Usage
 
