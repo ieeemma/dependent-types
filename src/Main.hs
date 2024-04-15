@@ -32,7 +32,7 @@ main =
         Right _ -> pure ()
       -- Write the compiled term to disk using the same name as the source file
       let out = dropExtension name <> ".rkt"
-      TIO.writeFile out (compile tm)
+      TIO.writeFile out ("#lang racket\n" <> compile tm)
       -- Run the racket formatter, for debugging purposes
       _ <- readProcess "raco" ["fmt", "-i", out] ""
       pure ()
