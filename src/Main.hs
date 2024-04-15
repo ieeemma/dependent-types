@@ -2,26 +2,51 @@ module Main where
 
 import Control.Monad.Except (runExcept)
 import Control.Monad.Reader (runReaderT)
-import Data.Text (unpack)
+import Data.Text (Text, unpack)
 import Data.Text.IO qualified as TIO
-import Error.Diagnose (addFile, addReport, def, defaultStyle, printDiagnostic, stderr)
+import Error.Diagnose (Report, addFile, addReport, def, defaultStyle, printDiagnostic, stderr)
+import System.Environment (getArgs, getProgName)
+import System.FilePath (dropExtension)
+import System.Process (readProcess)
 import Text.Megaparsec (errorBundlePretty, parse)
 
 import Compile.Compile (compile)
 import Infer.Infer (Ctx (..), infer)
-import Infer.Value
-import Parse.Parse (Span, file)
+import Parse.Parse (file)
 import Parse.Pretty ()
-
-tys :: Env Span
-tys = mempty
+import System.Exit (exitFailure)
 
 main :: IO ()
-main = do
-  let name = "examples/example"
-  src <- TIO.readFile name
-  case parse file name src of
-    Left e -> putStrLn (errorBundlePretty e)
-    Right t -> case runExcept (runReaderT (infer t) (Ctx tys mempty)) of
-      Left e -> printDiagnostic stderr True True 4 defaultStyle (addReport (addFile def name (unpack src)) e)
-      Right _ -> TIO.putStrLn (compile t)
+main =
+  getArgs >>= \case
+    [name] -> do
+      -- Read the source file
+      src <- TIO.readFile name
+      -- Parse the source, exit on parse error
+      tm <- case parse file name src of
+        Left e -> putStrLn (errorBundlePretty e) *> exitFailure
+        Right x -> pure x
+      -- Type check the term, exit on type error
+      case runExcept (runReaderT (infer tm) (Ctx mempty mempty)) of
+        Left e -> typeError name src e *> exitFailure
+        Right _ -> pure ()
+      -- Write the compiled term to disk using the same name as the source file
+      let out = dropExtension name <> ".rkt"
+      TIO.writeFile out (compile tm)
+      -- Run the racket formatter, for debugging purposes
+      _ <- readProcess "raco" ["fmt", "-i", out] ""
+      pure ()
+    _ -> do
+      -- Usage message
+      p <- getProgName
+      putStrLn ("usage: " <> p <> " <file>")
+
+typeError :: FilePath -> Text -> Report Text -> IO ()
+typeError name src e =
+  printDiagnostic
+    stderr
+    True
+    True
+    4
+    defaultStyle
+    (addReport (addFile def name (unpack src)) e)

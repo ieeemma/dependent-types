@@ -14,6 +14,8 @@ common all
                         mtl ^>=2.3.1,
                         containers ^>=0.6,
                         diagnose ^>=2.0,
+                        filepath ^>=1.4.2.2,
+                        process ^>=1.6.17.0
     default-language:   GHC2021
     other-modules:      Syntax,
                         Util,
