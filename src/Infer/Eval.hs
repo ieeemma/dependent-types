@@ -17,8 +17,9 @@ import Control.Comonad.Cofree (Cofree ((:<)), unwrap)
 import Control.Comonad.Trans.Cofree qualified as CF
 import Data.Bifunctor (bimap, first, second)
 import Data.Functor.Foldable (para)
-import Data.Map (fromList, insert, singleton, union, (!))
-import Data.Maybe (mapMaybe)
+import Data.Map (fromList, insert, lookup, singleton, union)
+import Data.Maybe (fromMaybe, mapMaybe)
+import Prelude hiding (lookup)
 
 import Infer.Value
 import Syntax
@@ -42,7 +43,7 @@ eval env = para f
     -- Case tries to match the scrutinee against each pattern
     CaseF (_, v) ps -> matches v (second fst <$> ps)
     -- Symbols are looked up in the environment
-    SymF n -> env ! n
+    SymF n -> fromMaybe (val $ VSymF n) (lookup n env)
     -- Constructors, unintuitively, self-evaluate
     -- This is because `Just 5` is represented as `VApp (VCon "Just") (VLit 5)`
     -- TODO: is this the right thing to do?
@@ -74,12 +75,13 @@ Destructuring is recursive, so `F x y` matches `(F 5) 10`, producing `{x: 5, y: 
 -}
 match :: Pat :@ a -> Val :@ a -> Maybe (Env a)
 match =
-  curry $ first unwrap >>> \case
-    (DestructF x ps, v) -> go x (reverse ps) v
-    (BindF x, v) -> Just (singleton x v)
-    (IsLitF n, _ :< (VLitF m)) | n == m -> Just mempty
-    (WildF, _) -> Just mempty
-    _ -> Nothing
+  curry $
+    first unwrap >>> \case
+      (DestructF x ps, v) -> go x (reverse ps) v
+      (BindF x, v) -> Just (singleton x v)
+      (IsLitF n, _ :< (VLitF m)) | n == m -> Just mempty
+      (WildF, _) -> Just mempty
+      _ -> Nothing
  where
   go x = curry \case
     ([], _ :< VConF y) | x == y -> Just mempty
@@ -89,17 +91,18 @@ match =
 -- | Beta-eta equality. Both values must have the same type!
 conv :: Val :@ a -> Val :@ a -> Bool
 conv =
-  curry $ bimap unwrap unwrap >>> \case
-    (VPiF x τ c, VPiF y π d) ->
-      conv τ π && conv (apply c x (sym x)) (apply d y (sym y))
-    (VLamF x c, VLamF y d) ->
-      conv (apply c x (sym x)) (apply d y (sym y))
-    (VAppF e₁ e₂, VAppF e₃ e₄) ->
-      conv e₁ e₃ && conv e₂ e₄
-    (VSymF x, VSymF y) -> x == y
-    (VConF x, VConF y) -> x == y
-    (VLitF x, VLitF y) -> x == y
-    (VUF, VUF) -> True
-    _ -> False
+  curry $
+    bimap unwrap unwrap >>> \case
+      (VPiF x τ c, VPiF y π d) ->
+        conv τ π && conv (apply c x (sym x)) (apply d y (sym y))
+      (VLamF x c, VLamF y d) ->
+        conv (apply c x (sym x)) (apply d y (sym y))
+      (VAppF e₁ e₂, VAppF e₃ e₄) ->
+        conv e₁ e₃ && conv e₂ e₄
+      (VSymF x, VSymF y) -> x == y
+      (VConF x, VConF y) -> x == y
+      (VLitF x, VLitF y) -> x == y
+      (VUF, VUF) -> True
+      _ -> False
  where
   sym x = error "oops!" :< VSymF x
