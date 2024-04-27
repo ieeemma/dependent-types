@@ -4,37 +4,28 @@ import Control.Arrow ((>>>))
 import Control.Monad.Except (runExcept)
 import Control.Monad.Reader (runReaderT)
 import Data.Bifunctor (first)
-import Data.Map (Map, alterF, fromList, toList)
+import Data.Map (Map, alterF, toList)
 import Data.Maybe (fromJust)
 import Data.Text (Text, unpack)
-import Data.Text.IO qualified as TIO
-import Data.Traversable (for)
 import Error.Diagnose (Report, addFile, addReport, def, prettyDiagnostic)
 import Prettyprinter (Pretty)
-import System.Directory (listDirectory)
-import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, assertFailure, testCase)
 
 import Infer.Infer (Ctx (..), infer)
 import Parse.Parse (file)
 import Test.Parse (parseFrom)
+import Util (files)
 
 inferTests :: IO TestTree
 inferTests = do
   -- Get all files and their contents in the Infer directory
   -- then pop the common file from the map.
   (common, fs') <- pop "common" <$> files "tests/Infer"
-  pure
-    $ testGroup
+  pure $
+    testGroup
       "Infer"
       [testCase p $ run p (common <> x) | (p, x) <- toList fs']
-
-files :: FilePath -> IO (Map FilePath Text)
-files path = do
-  fs <- listDirectory path
-  xs <- for fs ((path </>) >>> TIO.readFile)
-  pure $ fromList (zip fs xs)
 
 pop :: (Ord k) => k -> Map k v -> (v, Map k v)
 pop k = alterF (,Nothing) k >>> first fromJust

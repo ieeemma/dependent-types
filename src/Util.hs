@@ -6,7 +6,13 @@ module Util where
 import Control.Arrow ((>>>))
 import Control.Monad ((>=>))
 import Data.Functor.Foldable (Base, Recursive, cata, para)
+import Data.Map (Map, fromList)
+import Data.Text (Text)
+import Data.Text.IO qualified as TIO
+import Data.Traversable (for)
 import Error.Diagnose (Position (..))
+import System.Directory (listDirectory)
+import System.FilePath ((</>))
 import Text.Megaparsec (SourcePos (..), unPos)
 
 import Parse.Parse (Span (..))
@@ -35,3 +41,10 @@ fromSpan :: Span -> Position
 fromSpan (Span p₁ p₂) = Position (f p₁) (f p₂) (sourceName p₁)
  where
   f SourcePos{..} = (unPos sourceLine, unPos sourceColumn)
+
+-- | Get all files and their contents in a directory.
+files :: FilePath -> IO (Map FilePath Text)
+files path = do
+  fs <- listDirectory path
+  xs <- for fs ((path </>) >>> TIO.readFile)
+  pure $ fromList (zip fs xs)
