@@ -1,0 +1,43 @@
+-- The type of natural numbers, using the Peano representation.
+-- Very inefficient!
+data ℕ : Type {
+    Z : ℕ;
+    S : ℕ -> ℕ;
+};
+
+-- Natural equality;
+natEql : ℕ -> ℕ -> Bool
+= λx -> λy -> case x of {
+    Z -> case y of {
+        Z -> True;
+        S z -> False;
+    };
+    S z -> case y of {
+        Z -> False;
+        S w -> natEql z w;
+    };
+};
+
+-- Addition of natural numbers.
+add : ℕ -> ℕ -> ℕ
+= λx -> λy -> case x of {
+    Z -> y;
+    S z -> S (add z y);
+};
+
+-- Subtraction of natural numbers.
+sub : ℕ -> ℕ -> ℕ
+= λx -> λy -> case y of {
+    Z -> x;
+    S z -> case x of {
+        Z -> Z;
+        S w -> sub w z;
+    };
+};
+
+-- Multiplication of natural numbers.
+mul : ℕ -> ℕ -> ℕ
+= λx -> λy -> case x of {
+    Z -> Z;
+    S z -> add y (mul z y);
+};
