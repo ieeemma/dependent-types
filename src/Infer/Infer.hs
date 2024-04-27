@@ -117,8 +117,9 @@ let' :: [Bind (Tm :@ Span)] -> Infer a -> Infer a
 let' [] m = m
 let' (Def x σ e : bs) m = do
   σᵥ <- ensure σ u
-  eᵥ <- ensure e σᵥ
-  def x σᵥ eᵥ (let' bs m)
+  bind x σᵥ do
+    eᵥ <- ensure e σᵥ
+    def x σᵥ eᵥ (let' bs m)
 let' (Data x σ cs : bs) m = do
   σᵥ <- ensure σ u
   bind x σᵥ do
