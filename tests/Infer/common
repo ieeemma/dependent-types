@@ -1,0 +1,6 @@
+data Int : Type {} ;
+
+data Maybe : Type -> Type {
+    None : (a: Type) -> Maybe a;
+    Some : (a: Type) -> a -> Maybe a;
+};

@@ -1,3 +1,1 @@
-data Int : Type {} ;
-
 main : Int = 3 ;

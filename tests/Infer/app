@@ -1,8 +1,1 @@
-data Int : Type {} ;
-
-data Maybe : Type -> Type {
-  Just : (a : Type) -> a -> Maybe a ;
-  Nothing : (a : Type) -> Maybe a ;
-} ;
-
-main : Maybe Int = Just Int 42 ;
+main : Maybe Int = Some Int 42 ;
