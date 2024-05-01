@@ -35,3 +35,10 @@ fromSpan :: Span -> Position
 fromSpan (Span p₁ p₂) = Position (f p₁) (f p₂) (sourceName p₁)
  where
   f SourcePos{..} = (unPos sourceLine, unPos sourceColumn)
+
+-- | Monadic version of `or`
+orM :: (Monad m) => m Bool -> m Bool -> m Bool
+orM x y =
+  x >>= \case
+    True -> pure True
+    False -> y

@@ -1,19 +1,19 @@
 module Parse.Pretty where
 
-import Control.Applicative (liftA2)
 import Data.Functor.Foldable (para)
 import Data.Text (Text)
 import Prettyprinter (Doc, Pretty (..), defaultLayoutOptions, hsep, indent, layoutPretty, line, vsep, (<+>))
 import Prettyprinter.Render.Text (renderStrict)
 
 import Syntax
+import Util (orM)
 
 instance (Pretty p) => Pretty (Tm p) where
   pretty = para \case
-    PiF "_" σ π -> paren atom σ <+> "->" <+> paren (liftA2 (||) atom arrow) π
+    PiF "_" σ π -> paren atom σ <+> "->" <+> paren (orM atom arrow) π
     PiF x (_, σ) (_, π) -> "(" <> pretty x <+> ":" <+> σ <> ")" <+> "->" <+> π
     LamF x (_, e) -> "λ" <> pretty x <+> "->" <+> e
-    AppF e₁ e₂ -> paren (liftA2 (||) atom app) e₁ <+> paren atom e₂
+    AppF e₁ e₂ -> paren (orM atom app) e₁ <+> paren atom e₂
     LetF bs (_, e) -> "let" <+> block (pretty . fmap fst <$> bs) <+> "in" <+> e
     CaseF (_, e) ps -> "case" <+> e <+> "of" <+> block (alt <$> ps)
     SymF x -> pretty x
