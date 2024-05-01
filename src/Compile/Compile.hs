@@ -18,18 +18,16 @@ compile = compileTerm >>> toLazyText >>> toStrict
 
 compileTerm :: Tm :@ a -> Builder
 compileTerm =
-  para $ tailF >>> \case
-    LamF x (_, e) -> parens ["lambda", parens [fromText x], e]
-    AppF (_, e₁) (_, e₂) -> parens [e₁, e₂]
-    LetF bs (_, e) -> compileLet bs e
-    CaseF (_, e) cs -> compileCase e (second snd <$> cs)
-    SymF x -> fromText x
-    ConF x -> fromText x
-    LitF n -> decimal n
-    _ -> error "Impossible!"
-
-compileLet :: [Bind (Tm :@ a, Builder)] -> Builder -> Builder
-compileLet bs e = parens ["letrec", parens (concatMap compileBind bs), e]
+  para $
+    tailF >>> \case
+      LamF x (_, e) -> parens ["lambda", parens [fromText x], e]
+      AppF (_, e₁) (_, e₂) -> parens [e₁, e₂]
+      LetF bs (_, e) -> parens ["letrec", parens (concatMap compileBind bs), e]
+      CaseF (_, e) cs -> compileCase e (second snd <$> cs)
+      SymF x -> fromText x
+      ConF x -> fromText x
+      LitF n -> decimal n
+      _ -> error "Impossible!"
 
 compileBind :: Bind (Tm :@ a, Builder) -> [Builder]
 compileBind = \case
@@ -55,9 +53,9 @@ compilePat :: Pat :@ a -> Builder
 compilePat =
   unwrap >>> \case
     DestructF x ps ->
-      parens
-        $ ["list", parens ["quote", fromText x]]
-        <> fmap compilePat ps
+      parens $
+        ["list", parens ["quote", fromText x]]
+          <> fmap compilePat ps
     BindF x -> fromText x
     IsLitF n -> decimal n
     WildF -> "_"
