@@ -139,3 +139,6 @@ pat = paren <|> atom
         , IsLitF <$> int
         , WildF <$ symbol "_"
         ]
+
+mainTerm :: [Bind (Tm :@ Span)] -> Tm :@ Span
+mainTerm bs = error "TODO" :< LetF bs (error "TODO" :< SymF "main")

@@ -9,7 +9,6 @@ import Data.Functor.Foldable (Base, Recursive, cata, para)
 import Data.Map (Map, fromList)
 import Data.Text (Text)
 import Data.Text.IO qualified as TIO
-import Data.Traversable (for)
 import Error.Diagnose (Position (..))
 import System.Directory (listDirectory)
 import System.FilePath ((</>))
@@ -45,8 +44,8 @@ fromSpan (Span p₁ p₂) = Position (f p₁) (f p₂) (sourceName p₁)
 -- | Get all files and their contents in a directory.
 files :: FilePath -> IO (Map FilePath Text)
 files path = do
-  fs <- listDirectory path
-  xs <- for fs ((path </>) >>> TIO.readFile)
+  fs <- fmap (path </>) <$> listDirectory path
+  xs <- TIO.readFile `traverse` fs
   pure $ fromList (zip fs xs)
 
 -- | Monadic version of `or`

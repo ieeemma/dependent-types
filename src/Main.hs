@@ -15,7 +15,7 @@ import Text.Megaparsec (errorBundlePretty, parse)
 
 import Compile.Compile (compile)
 import Infer.Infer (Ctx (..), infer)
-import Parse.Parse (Span, file)
+import Parse.Parse (Span, file, mainTerm)
 import Syntax (Bind, Tm, TmF (..), (:@))
 import Util (files)
 
@@ -31,7 +31,7 @@ main =
       std <- files "stdlib"
       -- Parse all files
       binds <- concat <$> uncurry parseFile `traverse` (toList std <> [(name, src)])
-      let tm = error "TODO" :< LetF binds (error "TODO" :< SymF "main")
+      let tm = mainTerm binds
       -- Type check the term, exit on type error
       case runExcept (runReaderT (infer tm) (Ctx mempty mempty)) of
         Left e -> typeError name src e *> exitFailure

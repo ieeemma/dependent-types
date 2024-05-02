@@ -13,7 +13,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, assertFailure, testCase)
 
 import Infer.Infer (Ctx (..), infer)
-import Parse.Parse (file)
+import Parse.Parse (file, mainTerm)
 import Test.Parse (parseFrom)
 import Util (files)
 
@@ -21,7 +21,7 @@ inferTests :: IO TestTree
 inferTests = do
   -- Get all files and their contents in the Infer directory
   -- then pop the common file from the map.
-  (common, fs') <- pop "common" <$> files "tests/Infer"
+  (common, fs') <- pop "tests/Infer/common" <$> files "tests/Infer"
   pure $
     testGroup
       "Infer"
@@ -35,10 +35,9 @@ run path src = case runExcept (runReaderT (infer tm) ctx) of
   Right _ -> pure ()
   Left e -> assertFailure (prettyError path src e)
  where
-  tm = parseFrom file path src
+  tm = mainTerm (parseFrom file path src)
   ctx = Ctx mempty mempty
 
--- prettyError :: FilePath -> Text -> String
 prettyError :: (Pretty a) => FilePath -> Text -> Report a -> String
 prettyError path src =
   addReport (addFile def path (unpack src))

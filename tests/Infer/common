@@ -1,4 +1,4 @@
-data Int : Type {} ;
+data ℕ : Type {} ;
 
 data Maybe : Type -> Type {
     None : (a: Type) -> Maybe a;

@@ -1,4 +1,4 @@
-main : Int = case Some Int 5 of {
+main : ℕ = case Some ℕ 5 of {
     Some _ x -> x;
     None _ -> 0;
 };
