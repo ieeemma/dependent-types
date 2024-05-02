@@ -17,7 +17,7 @@ import Text.Megaparsec (eof, errorBundlePretty, parse)
 import Arbitrary ()
 import Deannotate (deannotatePat, deannotateTm)
 import Parse.Parse (Parser, pat, term)
-import Parse.Pretty ()
+import Parse.Pretty (render)
 
 parseFrom :: Parser a -> FilePath -> Text -> a
 parseFrom p path x = case parse (p <* eof) path x of
@@ -35,8 +35,5 @@ parseTests =
     , testProperty "Terms" testTerm
     ]
  where
-  testPattern p = deannotatePat (parseFrom' pat (prettyText p)) === p
-  testTerm t = deannotateTm (parseFrom' term (prettyText t)) === t
-
-prettyText :: (Pretty a) => a -> Text
-prettyText = pretty >>> layoutPretty defaultLayoutOptions >>> renderStrict
+  testPattern p = deannotatePat (parseFrom' pat (render p)) === p
+  testTerm t = deannotateTm (parseFrom' term (render t)) === t
