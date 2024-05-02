@@ -1,6 +1,5 @@
 module Main where
 
-import Control.Comonad.Cofree (Cofree ((:<)))
 import Control.Monad.Except (runExcept)
 import Control.Monad.Reader (runReaderT)
 import Data.Map (toList)
@@ -16,7 +15,7 @@ import Text.Megaparsec (errorBundlePretty, parse)
 import Compile.Compile (compile)
 import Infer.Infer (Ctx (..), infer)
 import Parse.Parse (Span, file, mainTerm)
-import Syntax (Bind, Tm, TmF (..), (:@))
+import Syntax (Bind, Tm, (:@))
 import Util (files)
 
 -- pure
@@ -34,7 +33,7 @@ main =
       let tm = mainTerm binds
       -- Type check the term, exit on type error
       case runExcept (runReaderT (infer tm) (Ctx mempty mempty)) of
-        Left e -> typeError name src e *> exitFailure
+        Left e -> typeError ((name, src) : toList std) e *> exitFailure
         Right _ -> pure ()
       -- Write the compiled term to disk using the same name as the source file
       let out = dropExtension name <> ".rkt"
@@ -52,12 +51,15 @@ parseFile p src = case parse file p src of
   Left e -> putStrLn (errorBundlePretty e) *> exitFailure
   Right x -> pure x
 
-typeError :: FilePath -> Text -> Report Text -> IO ()
-typeError name src e =
+typeError :: [(FilePath, Text)] -> Report Text -> IO ()
+typeError fs e =
   printDiagnostic
     stderr
     True
     True
     4
     defaultStyle
-    (addReport (addFile def name (unpack src)) e)
+    (addReport (f fs) e)
+ where
+  f [] = def
+  f ((name, src) : fs) = addFile (f fs) name (unpack src)
