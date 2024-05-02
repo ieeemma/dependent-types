@@ -106,7 +106,7 @@ infer (sp :< tm) = case tm of
   SymF x -> find x sp
   ConF x -> find x sp
   -- Literals are of type Int
-  LitF _ -> pure (sp :< VConF "Int")
+  LitF _ -> pure (sp :< VConF "ℕ")
   -- U is a type
   UF -> pure (sp :< VUF)
  where

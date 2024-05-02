@@ -18,15 +18,16 @@ compile = compileTerm >>> toLazyText >>> toStrict
 
 compileTerm :: Tm :@ a -> Builder
 compileTerm =
-  para $ tailF >>> \case
-    LamF x (_, e) -> parens ["lambda", parens [fromText x], e]
-    AppF (_, e₁) (_, e₂) -> parens [e₁, e₂]
-    LetF bs (_, e) -> compileLet bs e
-    CaseF (_, e) cs -> compileCase e (second snd <$> cs)
-    SymF x -> fromText x
-    ConF x -> fromText x
-    LitF n -> decimal n
-    _ -> error "Impossible!"
+  para $
+    tailF >>> \case
+      LamF x (_, e) -> parens ["lambda", parens [fromText x], e]
+      AppF (_, e₁) (_, e₂) -> parens [e₁, e₂]
+      LetF bs (_, e) -> compileLet bs e
+      CaseF (_, e) cs -> compileCase e (second snd <$> cs)
+      SymF x -> fromText x
+      ConF x -> fromText x
+      LitF n -> compileLit n
+      _ -> error "Impossible!"
 
 compileLet :: [Bind (Tm :@ a, Builder)] -> Builder -> Builder
 compileLet bs e = parens ["letrec", parens (concatMap compileBind bs), e]
@@ -55,12 +56,17 @@ compilePat :: Pat :@ a -> Builder
 compilePat =
   unwrap >>> \case
     DestructF x ps ->
-      parens
-        $ ["list", parens ["quote", fromText x]]
-        <> fmap compilePat ps
+      parens $
+        ["list", parens ["quote", fromText x]]
+          <> fmap compilePat ps
     BindF x -> fromText x
-    IsLitF n -> decimal n
+    IsLitF n -> compileLit n
     WildF -> "_"
+
+compileLit :: Int -> Builder
+compileLit = \case
+  0 -> "Z"
+  n -> parens ["S", compileLit (n - 1)]
 
 parens :: [Builder] -> Builder
 parens xs = "(" <> mconcat (intersperse " " xs) <> ")"
