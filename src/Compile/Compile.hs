@@ -26,7 +26,7 @@ compileTerm =
       CaseF (_, e) cs -> compileCase e (second snd <$> cs)
       SymF x -> fromText x
       ConF x -> fromText x
-      LitF n -> decimal n
+      LitF n -> compileLit n
       _ -> error "Impossible!"
 
 compileBind :: Bind (Tm :@ a, Builder) -> [Builder]
@@ -57,8 +57,13 @@ compilePat =
         ["list", parens ["quote", fromText x]]
           <> fmap compilePat ps
     BindF x -> fromText x
-    IsLitF n -> decimal n
+    IsLitF n -> compileLit n
     WildF -> "_"
+
+compileLit :: Int -> Builder
+compileLit = \case
+  0 -> "Z"
+  n -> parens ["S", compileLit (n - 1)]
 
 parens :: [Builder] -> Builder
 parens xs = "(" <> mconcat (intersperse " " xs) <> ")"

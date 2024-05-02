@@ -1,0 +1,28 @@
+data Maybe : Type -> Type {
+    Some : (a: Type) -> a -> Maybe a;
+    None : (a: Type) -> Maybe a;
+};
+
+fromMaybe : (a: Type) -> a -> Maybe a -> a
+= λa -> λdef -> λm -> case m of {
+    Some _ x -> x;
+    None _ -> def;
+};
+
+mapMaybe : (a: Type) -> (b: Type) -> (a -> b) -> Maybe a -> Maybe b
+= λa -> λb -> λf -> λm -> case m of {
+    Some _ x -> Some b (f x);
+    None _ -> None b;
+};
+
+isSome : (a: Type) -> Maybe a -> Bool
+= λa -> λm -> case m of {
+    Some _ _ -> True;
+    None _ -> False;
+};
+
+isNone : (a: Type) -> Maybe a -> Bool
+= λa -> λm -> case m of {
+    Some _ _ -> False;
+    None _ -> True;
+};

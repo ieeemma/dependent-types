@@ -71,10 +71,8 @@ int :: Parser Int
 int = lexeme $ try $ L.signed (pure ()) L.decimal
 
 -- | Parse a file.
-file :: Parser (Tm :@ Span)
-file = do
-  bs <- ws *> bind `sepEndBy` symbol ";" <* eof
-  pure (error "TODO" :< LetF bs (error "TODO" :< SymF "main"))
+file :: Parser [Bind (Tm :@ Span)]
+file = ws *> bind `sepEndBy` symbol ";" <* eof
 
 -- | Parse a whole term with operator precedence.
 term :: Parser (Tm :@ Span)
@@ -97,8 +95,8 @@ term =
 
   -- Parse an atomic term.
   atom =
-    spanned
-      $ choice
+    spanned $
+      choice
         [ LamF
             <$> (symbol "λ" *> lower)
             <*> (symbol "->" *> term)
@@ -132,8 +130,8 @@ pat = paren <|> atom
  where
   paren = between (symbol "(") (symbol ")") pat
   atom =
-    spanned
-      $ choice
+    spanned $
+      choice
         [ DestructF
             <$> upper
             <*> many pat

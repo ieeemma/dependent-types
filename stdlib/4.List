@@ -1,0 +1,39 @@
+data List : Type -> Type {
+    Nil : (a: Type) -> List a;
+    Cons : (a: Type) -> a -> List a -> List a;
+};
+
+head
+: (a: Type) -> List a -> Maybe a
+= λa -> λx -> case x of {
+    Nil _ -> None a;
+    Cons _ y _ -> Some a y;
+};
+
+tail
+: (a: Type) -> List a -> List a
+= λa -> λx -> case x of {
+    Nil _ -> Nil a;
+    Cons _ _ ys -> ys;
+};
+
+length
+: (a : Type) -> List a -> ℕ
+= λa -> λx -> case x of {
+    Nil _ -> 0;
+    Cons _ _ ys -> add 1 (length a ys);
+};
+
+mapList
+: (a : Type) -> (b : Type) -> (a -> b) -> List a -> List b
+= λa -> λb -> λf -> λx -> case x of {
+    Nil _ -> Nil b;
+    Cons _ y ys -> Cons b (f y) (mapList a b f ys);
+};
+
+concat
+: (a : Type) -> List a -> List a -> List a
+= λa -> λx -> λ y -> case x of {
+    Nil _ -> y;
+    Cons _ x xs -> Cons a x (concat a xs y);
+};

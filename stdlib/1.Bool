@@ -1,0 +1,28 @@
+data Bool : Type {
+    True : Bool;
+    False: Bool;
+};
+
+and : Bool -> Bool -> Bool
+= λx -> λy -> case x of {
+    True -> case y of {
+        True -> True;
+        False -> False;
+    };
+    False -> False;
+};
+
+or : Bool -> Bool -> Bool
+= λx -> λy -> case x of {
+    True -> True;
+    False -> case y of {
+        True -> True;
+        False -> False;
+    };
+};
+
+not : Bool -> Bool
+= λx -> case x of {
+    True -> False;
+    False -> True;
+};
