@@ -48,3 +48,10 @@ files path = do
   fs <- listDirectory path
   xs <- for fs ((path </>) >>> TIO.readFile)
   pure $ fromList (zip fs xs)
+
+-- | Monadic version of `or`
+orM :: (Monad m) => m Bool -> m Bool -> m Bool
+orM x y =
+  x >>= \case
+    True -> pure True
+    False -> y
