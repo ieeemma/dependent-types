@@ -20,6 +20,7 @@ compileTerm :: Tm :@ a -> Builder
 compileTerm =
   para $
     tailF >>> \case
+      PiF x _ (_, e) -> parens ["lambda", parens [fromText x], e]
       LamF x (_, e) -> parens ["lambda", parens [fromText x], e]
       AppF (_, e₁) (_, e₂) -> parens [e₁, e₂]
       LetF bs (_, e) -> parens ["letrec", parens (concatMap compileBind bs), e]
@@ -27,7 +28,7 @@ compileTerm =
       SymF x -> fromText x
       ConF x -> fromText x
       LitF n -> compileLit n
-      _ -> error "Impossible!"
+      UF -> "Type"
 
 compileBind :: Bind (Tm :@ a, Builder) -> [Builder]
 compileBind = \case
