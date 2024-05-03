@@ -141,4 +141,7 @@ pat = paren <|> atom
         ]
 
 mainTerm :: [Bind (Tm :@ Span)] -> Tm :@ Span
-mainTerm bs = error "TODO" :< LetF bs (error "TODO" :< SymF "main")
+mainTerm bs = mainTermWith bs (error "TODO" :< SymF "main")
+
+mainTermWith :: [Bind (Tm :@ Span)] -> Tm :@ Span -> Tm :@ Span
+mainTermWith bs e = error "TODO" :< LetF bs e
