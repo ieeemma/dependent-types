@@ -38,4 +38,7 @@ cases =
     ("single let", "let { x : ℕ = 5; } in x", "5")
   , ("multi let", "let { x : ℕ = 5; y : ℕ = 10; } in y", "10")
   , ("recursive", "let { x : ℕ = 5; y : ℕ = x } in x", "5")
+  , -- Case tests
+    ("case some", "case Some ℕ 5 of { Some _ x -> x; None _ -> 0 }", "5")
+  , ("case none", "case None ℕ of { Some _ x -> x; None _ -> 0 }", "0")
   ]
