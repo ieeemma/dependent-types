@@ -27,7 +27,7 @@ cases =
   [ -- Self-eval tests
     ("lit", "3", "3")
   , ("con", "True", "True")
-  , ("app", "Just 5", "Just 5")
+  , ("app", "Some 5", "Some 5")
   , ("λ", "λx -> x", "λx -> x")
   , ("Π", "(x: Type) -> Maybe x", "(x: Type) -> Maybe x")
   , -- β reduction rule
