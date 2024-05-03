@@ -28,34 +28,28 @@ import Syntax
 with annotations it originates from in the term.
 -}
 eval :: Env a -> Tm :@ a -> Val :@ a
-eval env = para f
+eval env = para \(a CF.:< tm) -> case tm of
+  -- Π and λ construct closures with their environment and body
+  PiF x (_, v) (t, _) -> a :< VPiF x v (Clos env t)
+  LamF x (t, _) -> a :< VLamF x (Clos env t)
+  -- Application to a lambda reduces
+  AppF (_, _ :< VLamF x c) (_, v) -> a :< unwrap (apply c x v)
+  -- Application to anything else is neutral
+  AppF (_, v₁) (_, v₂) -> a :< VAppF v₁ v₂
+  -- Let is a local binding
+  LetF bs (t, _) -> eval (binds bs `union` env) t
+  -- Case tries to match the scrutinee against each pattern
+  CaseF (_, v) ps -> matches v (second fst <$> ps)
+  -- Symbols are looked up in the environment
+  SymF n -> fromMaybe (a :< VSymF n) (lookup n env)
+  -- Constructors, unintuitively, self-evaluate
+  -- This is because `Just 5` is represented as `VApp (VCon "Just") (VLit 5)`
+  -- TODO: is this the right thing to do?
+  ConF n -> a :< VConF n
+  -- Literals self-evaluate
+  LitF n -> a :< VLitF n
+  UF -> a :< VUF
  where
-  f (a CF.:< tm) = case tm of
-    -- Π and λ construct closures with their environment and body
-    PiF x (_, v) (t, _) -> val (VPiF x v (Clos env t))
-    LamF x (t, _) -> val (VLamF x (Clos env t))
-    -- Application to a lambda reduces
-    AppF (_, _ :< VLamF x c) (_, v) -> val (unwrap (apply c x v))
-    -- Application to anything else is neutral
-    AppF (_, v₁) (_, v₂) -> val (VAppF v₁ v₂)
-    -- Let is a local binding
-    LetF bs (t, _) -> eval (binds bs `union` env) t
-    -- Case tries to match the scrutinee against each pattern
-    CaseF (_, v) ps -> matches v (second fst <$> ps)
-    -- Symbols are looked up in the environment
-    SymF n -> fromMaybe (val $ VSymF n) (lookup n env)
-    -- Constructors, unintuitively, self-evaluate
-    -- This is because `Just 5` is represented as `VApp (VCon "Just") (VLit 5)`
-    -- TODO: is this the right thing to do?
-    ConF n -> val (VConF n)
-    -- Literals self-evaluate
-    LitF n -> val (VLitF n)
-    UF -> val VUF
-   where
-    val = (a :<)
-
-  -- TODO: Okay, this is just wrong.
-  -- I think the environment needs to store constructors too.
   binds =
     fromList . mapMaybe \case
       Def x _ (_, v) -> Just (x, v)
