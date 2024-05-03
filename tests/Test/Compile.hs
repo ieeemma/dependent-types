@@ -32,8 +32,7 @@ std = parseFrom' file header
 sameCompile :: Text -> Text -> Assertion
 sameCompile x y = do
   let x' = compile (mainTermWith std (parseFrom' term x))
-      y' = compile (mainTermWith std (parseFrom' term y))
-   in do
-      vx <- readProcess "racket" ["-e", unpack x'] ""
-      vy <- readProcess "racket" ["-e", unpack y'] ""
-      vx @?= vy
+  let y' = compile (mainTermWith std (parseFrom' term y))
+  vx <- readProcess "racket" ["-e", unpack x'] ""
+  vy <- readProcess "racket" ["-e", unpack y'] ""
+  vx @?= vy
