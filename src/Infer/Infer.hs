@@ -153,7 +153,7 @@ pat = curry \case
     s <- lift (unify τ π)
     pure (subst s env)
   (_ :< BindF x, τ) -> pure (singleton x τ)
-  (_ :< IsLitF _, _ :< VConF "Int") -> pure mempty
+  (_ :< IsLitF _, _ :< VConF "ℕ") -> pure mempty
   (_ :< WildF, _) -> pure mempty
   (sp :< _, _ :< τ) -> typeError' "Type mismatch" [marker (sp :< τ) ("Expected " <>)]
  where
