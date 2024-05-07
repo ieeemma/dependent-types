@@ -33,7 +33,7 @@ compileTerm =
 compileBind :: Bind (Tm :@ a, Builder) -> [Builder]
 compileBind = \case
   Def x _ (_, e) -> [parens [fromText x, e]]
-  Data x _ cs -> parens [fromText x, "null"] : fmap f cs
+  Data x _ cs -> let n = fromText x in parens [n, parens ["quote", n]] : fmap f cs
    where
     f (y, (σ, _)) = parens [fromText y, g y 0 σ]
 
