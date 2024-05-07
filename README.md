@@ -1,38 +1,43 @@
 # Dependent Types
 
-A yet unnamed dependently typed language and compiler.
+This repository contains a compiler for a dependently typed language.
+The language borrows concepts and syntax from Idris, and is implemented in Haskell.
+
+## Usage
+
+The project depends on the following tools:
+
+- [GHC](https://www.haskell.org/ghc/)
+- [Cabal](https://www.haskell.org/cabal/)
+- [Racket](https://racket-lang.org/)
+
+These can be installed through the above links or using a package manager.
+On Ubuntu, the command `sudo apt install ghc cabal-install racket` will install the necessary tools.
+
+The project can be built with `cabal build`, and the compiler can be run with `cabal run dependent-types -- <file>`.
+Examples to run can be found in the `examples/` directory.
+This produces a Racket file that can be run with `racket <file>.rkt`.
+
+The test suite can be run with `cabal test --test-show-details=always --test-option "--color=always"`.
 
 ## Roadmap
-
-Features marked with `*` are not required for the core language but may be implemented if time allows.
 
 - Parser
   - [x] AST powered by [recursion-schemes](https://hackage.haskell.org/package/recursion-schemes)
   - [x] Expressions
-  - [x] Toplevels
-  - [ ] \* Custom infix operators
-  - [ ] \* Anyfix operator parsing similar to Agda
+  - [x] Top-level definitions
 - Static analysis
   - [x] Dependent typing
     - [x] Evaluation
     - [x] Normalization
-    - [ ] \* Unification for holes
-    - [ ] \* Implicit arguments
-  - [ ] \* Type classes
-  - [ ] \* Totality checking similar to Idris
+    - [x] Unification
+    - [x] Bidirectional checking
 - Compiler
   - [x] Scheme backend
-  - [ ] \* Optimization
 - Language support
-  - [ ] Prelude of useful types
-  - [ ] Documentation for prelude
-  - [ ] \* More advanced libraries eg. proof helpers
-  - [ ] \* CFFI
+  - [x] Prelude of useful types
+  - [ ] Examples
+  - [ ] Documentation
 - Tooling
-  - [ ] CLI
+  - [x] CLI
   - [x] Pretty errors powered by [diagnose](https://hackage.haskell.org/package/diagnose)
-
-## Usage
-
-A file can be compiled using `cabal run dependent-types -- file`.
-Test suite can be run using `cabal run test:tests`.
