@@ -1,0 +1,56 @@
+
+-- | Take the first n elements of a list
+take : (a : Type) -> ℕ -> List a -> List a
+= λa -> λn -> λxs -> case n of {
+  0 -> Nil a;
+  S n2 -> case xs of {
+    Nil _ -> Nil a;
+    Cons _ x xs2 -> Cons a x (take a n2 xs2);
+  }
+};
+
+-- | Drop the first n elements of a list
+drop : (a : Type) -> ℕ -> List a -> List a
+= λa -> λn -> λxs -> case n of {
+  0 -> xs;
+  S n2 -> case xs of {
+    Nil _ -> Nil a;
+    Cons _ _ xs2 -> drop a n2 xs2;
+  }
+};
+
+-- | Find half of the length of a list, rounded down
+halfLength : (a : Type) -> List a -> ℕ
+= λa -> λxs -> case xs of {
+  Cons _ _ (Cons _ _ xs2) -> S (halfLength a xs2);
+  _ -> 0;
+};
+
+-- | Merge two lists of natural numbers
+merge : List ℕ -> List ℕ -> List ℕ
+= λxs -> λys -> case xs of {
+  Nil _ -> ys;
+  Cons _ x xs2 -> case ys of {
+    Nil _ -> xs;
+    Cons _ y ys2 -> case natLeq x y of {
+      True -> Cons ℕ x (merge xs2 ys);
+      False -> Cons ℕ y (merge xs ys2);
+    }
+  }
+};
+
+-- | Merge sort a list of natural numbers
+mergeSort : List ℕ -> List ℕ
+= λx -> case x of {
+  Nil _ -> Nil ℕ;
+  Cons _ x (Nil _) -> Cons ℕ x (Nil ℕ);
+  xs -> let {
+    n : ℕ = halfLength ℕ xs;
+    l : List ℕ = take ℕ n xs;
+    r : List ℕ = drop ℕ n xs;
+  } in merge (mergeSort l) (mergeSort r);
+};
+
+main : List ℕ = mergeSort (Cons ℕ 5 (Cons ℕ 3 (Cons ℕ 1 (Cons ℕ 2 (Nil ℕ)))))
+
+

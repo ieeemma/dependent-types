@@ -18,6 +18,16 @@ natEql : ℕ -> ℕ -> Bool
     };
 };
 
+-- Natural less-than-or-equal.
+natLeq : ℕ -> ℕ -> Bool
+= λx -> λy -> case x of {
+    Z -> True;
+    S z -> case y of {
+        Z -> False;
+        S w -> natLeq z w;
+    };
+};
+
 -- Addition of natural numbers.
 add : ℕ -> ℕ -> ℕ
 = λx -> λy -> case x of {
