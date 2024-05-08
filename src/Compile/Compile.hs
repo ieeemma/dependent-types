@@ -58,8 +58,11 @@ compilePat =
         ["list", parens ["quote", fromText x]]
           <> fmap compilePat ps
     BindF x -> fromText x
-    IsLitF n -> compileLit n
+    IsLitF n -> f n
     WildF -> "_"
+ where
+  f 0 = parens ["list", parens ["quote", "Z"]]
+  f n = parens ["list", parens ["quote", "S"], f (n - 1)]
 
 compileLit :: Int -> Builder
 compileLit = \case
